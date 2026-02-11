@@ -24,6 +24,46 @@ document.addEventListener('DOMContentLoaded', () => {
     // Expand/collapse state – tracks which regNummers are expanded
     const expandedGroups = new Set();
 
+    // Flag to suppress sort when a column resize just happened
+    let resizing = false;
+
+    // Priority rankings for status fields (lower index = worse)
+    const STATUS_RANK = {
+        uitgevoerd:    ['Nee', 'Bezig', 'Ja', 'Vervallen'],
+        afgemeld:      ['Nee', 'Ja'],
+        referentie:    ['Nee', 'Ja', 'Onnodig'],
+        archiefGevuld: ['Nee', 'Onvolledig', 'Ja'],
+        vervolg:       ['Ja', 'Onbekend', 'Gepland', 'Nee'],
+    };
+
+    // Return the worst (lowest-ranked) value across records for a status field
+    function worstValue(field, recs) {
+        const rank = STATUS_RANK[field];
+        if (!rank) return recs[0][field] || '';
+        let worstIdx = rank.length;
+        let worstVal = '';
+        recs.forEach(r => {
+            const v = r[field] || '';
+            const idx = rank.indexOf(v);
+            if (idx !== -1 && idx < worstIdx) {
+                worstIdx = idx;
+                worstVal = v;
+            }
+        });
+        return worstVal || recs[0][field] || '';
+    }
+
+    // Build a summary object for a group's collapsed row (worst status values)
+    function groupSummary(recs) {
+        return {
+            uitgevoerd:    worstValue('uitgevoerd', recs),
+            afgemeld:      worstValue('afgemeld', recs),
+            referentie:    worstValue('referentie', recs),
+            archiefGevuld: worstValue('archiefGevuld', recs),
+            vervolg:       worstValue('vervolg', recs),
+        };
+    }
+
     // Calculate score based on field values
     function calculateScore(record) {
         let score = 0;
@@ -161,11 +201,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hasMultiple = recs.length > 1;
                 const isExpanded = expandedGroups.has(regNummer);
 
+                // For multi-record groups, compute worst status values
+                const summary = hasMultiple ? groupSummary(recs) : null;
+                const dispUitg     = summary ? summary.uitgevoerd    : first.uitgevoerd;
+                const dispAfg      = summary ? summary.afgemeld      : first.afgemeld;
+                const dispRef      = summary ? summary.referentie    : first.referentie;
+                const dispArchief  = summary ? summary.archiefGevuld : first.archiefGevuld;
+                const dispVervolg  = summary ? summary.vervolg       : first.vervolg;
+
+                // Score is computed from displayed (worst) values
+                const scoreRecord = summary
+                    ? { uitgevoerd: dispUitg, afgemeld: dispAfg, referentie: dispRef, archiefGevuld: dispArchief, vervolg: dispVervolg }
+                    : first;
+                const sc = calculateScore(scoreRecord);
+
                 // Parent / only row
                 const tr = document.createElement('tr');
                 if (hasMultiple) tr.classList.add('group-parent');
 
-                const sc = calculateScore(first);
                 const expandBtn = hasMultiple
                     ? `<button class="btn-expand" data-reg="${escapeHtml(regNummer)}">${isExpanded ? '\u25BC' : '\u25B6'}</button> `
                     : '';
@@ -180,11 +233,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="score-${sc}">${escapeHtml(first.monteur)}</td>
                     <td class="score-${sc}">${formatDate(first.datumAanvang)}</td>
                     <td class="score-${sc}">${formatDate(first.datumEind)}</td>
-                    <td class="cell-status ${statusColor('uitgevoerd', first.uitgevoerd)}">${escapeHtml(first.uitgevoerd)}</td>
-                    <td class="cell-status ${statusColor('afgemeld', first.afgemeld)}">${escapeHtml(first.afgemeld)}</td>
-                    <td class="cell-status ${statusColor('referentie', first.referentie)}">${escapeHtml(first.referentie)}</td>
-                    <td class="cell-status ${statusColor('archiefGevuld', first.archiefGevuld)}">${escapeHtml(first.archiefGevuld)}</td>
-                    <td class="cell-status ${statusColor('vervolg', first.vervolg)}">${escapeHtml(first.vervolg)}</td>
+                    <td class="cell-status ${statusColor('uitgevoerd', dispUitg)}">${escapeHtml(dispUitg)}</td>
+                    <td class="cell-status ${statusColor('afgemeld', dispAfg)}">${escapeHtml(dispAfg)}</td>
+                    <td class="cell-status ${statusColor('referentie', dispRef)}">${escapeHtml(dispRef)}</td>
+                    <td class="cell-status ${statusColor('archiefGevuld', dispArchief)}">${escapeHtml(dispArchief)}</td>
+                    <td class="cell-status ${statusColor('vervolg', dispVervolg)}">${escapeHtml(dispVervolg)}</td>
                     <td class="cell-opmerking" title="${escapeHtml(first.opmerking)}">${escapeHtml(first.opmerking)}</td>
                     <td class="cell-actions">
                         <button class="btn btn-edit" data-id="${first.id}">Bewerk</button>
@@ -304,6 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
             handle.addEventListener('mousedown', (e) => {
                 e.preventDefault();
                 e.stopPropagation(); // don't trigger sort
+                resizing = true;
                 startX = e.pageX;
                 startWidth = th.offsetWidth;
                 table.style.tableLayout = 'fixed';
@@ -325,6 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const onMouseUp = () => {
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
+                    // Clear resizing flag after the click event has fired
+                    setTimeout(() => { resizing = false; }, 0);
                 };
 
                 document.addEventListener('mousemove', onMouseMove);
@@ -429,6 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event: Sort on header click
     document.getElementById('headerRow').addEventListener('click', (e) => {
+        if (resizing) return; // ignore clicks caused by column resize
         const th = e.target.closest('th[data-key]');
         if (!th) return;
         const key = th.dataset.key;
