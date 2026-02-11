@@ -16,6 +16,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let records = loadRecords();
     let editingId = null;
 
+    // Calculate score based on field values
+    function calculateScore(record) {
+        let score = 0;
+        if (record.uitgevoerd === 'Ja') score++;
+        if (record.afgemeld === 'Ja') score++;
+        if (record.referentie === 'Ja') score++;
+        if (record.archiefGevuld === 'Ja') score++;
+        if (record.vervolg === 'Nee' || record.vervolg === 'Gepland') score++;
+        return score;
+    }
+
     // Load records from localStorage, seed with INITIAL_DATA on first run
     function loadRecords() {
         const data = localStorage.getItem(STORAGE_KEY);
@@ -47,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (records.length === 0) {
             const tr = document.createElement('tr');
             tr.className = 'empty-state';
-            tr.innerHTML = `<td colspan="14">Geen records gevonden. Klik op "+ Nieuw Record" om te beginnen.</td>`;
+            tr.innerHTML = `<td colspan="13">Geen records gevonden. Klik op "+ Nieuw Record" om te beginnen.</td>`;
             tableBody.appendChild(tr);
         } else {
             records.forEach(record => {
@@ -64,7 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="cell-status">${escapeHtml(record.referentie)}</td>
                     <td class="cell-status">${escapeHtml(record.archiefGevuld)}</td>
                     <td class="cell-status">${escapeHtml(record.vervolg)}</td>
-                    <td class="cell-status">${record.score}</td>
                     <td class="cell-opmerking" title="${escapeHtml(record.opmerking)}">${escapeHtml(record.opmerking)}</td>
                     <td class="cell-actions">
                         <button class="btn btn-edit" data-id="${record.id}">Bewerk</button>
@@ -119,9 +129,10 @@ document.addEventListener('DOMContentLoaded', () => {
             referentie: document.getElementById('referentie').value,
             archiefGevuld: document.getElementById('archiefGevuld').value,
             vervolg: document.getElementById('vervolg').value,
-            score: parseInt(document.getElementById('score').value, 10),
             opmerking: document.getElementById('opmerking').value.trim(),
         };
+        data.score = calculateScore(data);
+        return data;
     }
 
     // Populate form with record data
@@ -146,7 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('referentie').value = record.referentie || 'Nee';
         document.getElementById('archiefGevuld').value = record.archiefGevuld || 'Ja';
         document.getElementById('vervolg').value = record.vervolg || 'Nee';
-        document.getElementById('score').value = record.score != null ? record.score : 5;
         document.getElementById('opmerking').value = record.opmerking || '';
     }
 
