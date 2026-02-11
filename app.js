@@ -79,14 +79,15 @@ document.addEventListener('DOMContentLoaded', () => {
             tableBody.appendChild(tr);
         } else {
             records.forEach(record => {
+                const sc = calculateScore(record);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${escapeHtml(record.regNummer)}</td>
-                    <td>${escapeHtml(record.woNummer)}</td>
-                    <td>${escapeHtml(record.waar)}</td>
-                    <td>${escapeHtml(record.monteur)}</td>
-                    <td>${formatDate(record.datumAanvang)}</td>
-                    <td>${formatDate(record.datumEind)}</td>
+                    <td class="score-${sc}">${escapeHtml(record.regNummer)}</td>
+                    <td class="score-${sc}">${escapeHtml(record.woNummer)}</td>
+                    <td class="score-${sc}">${escapeHtml(record.waar)}</td>
+                    <td class="score-${sc}">${escapeHtml(record.monteur)}</td>
+                    <td class="score-${sc}">${formatDate(record.datumAanvang)}</td>
+                    <td class="score-${sc}">${formatDate(record.datumEind)}</td>
                     <td class="cell-status ${statusColor('uitgevoerd', record.uitgevoerd)}">${escapeHtml(record.uitgevoerd)}</td>
                     <td class="cell-status ${statusColor('afgemeld', record.afgemeld)}">${escapeHtml(record.afgemeld)}</td>
                     <td class="cell-status ${statusColor('referentie', record.referentie)}">${escapeHtml(record.referentie)}</td>
