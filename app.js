@@ -19,9 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Calculate score based on field values
     function calculateScore(record) {
         let score = 0;
-        if (record.uitgevoerd === 'Ja') score++;
+        if (record.uitgevoerd === 'Ja' || record.uitgevoerd === 'Vervallen') score++;
         if (record.afgemeld === 'Ja') score++;
-        if (record.referentie === 'Ja') score++;
+        if (record.referentie === 'Ja' || record.referentie === 'Onnodig') score++;
         if (record.archiefGevuld === 'Ja') score++;
         if (record.vervolg === 'Nee' || record.vervolg === 'Gepland') score++;
         return score;
