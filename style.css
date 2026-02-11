@@ -34,6 +34,11 @@ body {
     color: #1a1a2e;
 }
 
+.header-buttons {
+    display: flex;
+    gap: 8px;
+}
+
 /* Buttons */
 .btn {
     padding: 8px 16px;

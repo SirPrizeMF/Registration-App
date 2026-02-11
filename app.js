@@ -155,6 +155,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
     }
 
+    // Event: Reset data to original import
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        if (confirm('Weet je zeker? Dit laadt de originele 154 records opnieuw in en verwijdert eventuele wijzigingen.')) {
+            localStorage.removeItem(STORAGE_KEY);
+            records = loadRecords();
+            renderTable();
+        }
+    });
+
     // Event: Add new record
     addRowBtn.addEventListener('click', () => {
         editingId = null;
