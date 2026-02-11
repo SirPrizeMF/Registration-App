@@ -131,6 +131,37 @@ thead th:last-child {
     border-right: none;
 }
 
+/* Sortable headers */
+#headerRow th[data-key] {
+    cursor: pointer;
+    user-select: none;
+}
+
+#headerRow th[data-key]:hover {
+    background-color: #2a4f7a;
+}
+
+.sort-arrow {
+    font-size: 0.55rem;
+}
+
+/* Filter row */
+#filterRow th {
+    padding: 3px 2px;
+    background-color: #e5e7eb;
+}
+
+.filter-input,
+.filter-select {
+    width: 100%;
+    padding: 2px 3px;
+    font-size: 0.6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 3px;
+    background: #fff;
+    box-sizing: border-box;
+}
+
 tbody tr {
     border-bottom: 1px solid #e5e7eb;
     transition: background-color 0.15s;

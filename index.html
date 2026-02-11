@@ -35,21 +35,71 @@
                     <col style="width: 9%">
                 </colgroup>
                 <thead>
-                    <tr>
-                        <th>Reg. Nr.</th>
-                        <th>WO-nr.</th>
-                        <th>Waar</th>
-                        <th>Monteur</th>
-                        <th>Aanvang</th>
-                        <th>Eind</th>
-                        <th>Uitg.</th>
-                        <th>Afg.</th>
-                        <th>Ref.</th>
-                        <th>Archief</th>
-                        <th>Vervolg</th>
-
-                        <th>Opmerking</th>
+                    <tr id="headerRow">
+                        <th data-key="regNummer">Reg. Nr. <span class="sort-arrow"></span></th>
+                        <th data-key="woNummer">WO-nr. <span class="sort-arrow"></span></th>
+                        <th data-key="waar">Waar <span class="sort-arrow"></span></th>
+                        <th data-key="monteur">Monteur <span class="sort-arrow"></span></th>
+                        <th data-key="datumAanvang">Aanvang <span class="sort-arrow"></span></th>
+                        <th data-key="datumEind">Eind <span class="sort-arrow"></span></th>
+                        <th data-key="uitgevoerd">Uitg. <span class="sort-arrow"></span></th>
+                        <th data-key="afgemeld">Afg. <span class="sort-arrow"></span></th>
+                        <th data-key="referentie">Ref. <span class="sort-arrow"></span></th>
+                        <th data-key="archiefGevuld">Archief <span class="sort-arrow"></span></th>
+                        <th data-key="vervolg">Vervolg <span class="sort-arrow"></span></th>
+                        <th data-key="opmerking">Opmerking <span class="sort-arrow"></span></th>
                         <th>Acties</th>
+                    </tr>
+                    <tr id="filterRow">
+                        <th><input type="text" class="filter-input" data-key="regNummer" placeholder="Filter..."></th>
+                        <th><input type="text" class="filter-input" data-key="woNummer" placeholder="Filter..."></th>
+                        <th><input type="text" class="filter-input" data-key="waar" placeholder="Filter..."></th>
+                        <th><input type="text" class="filter-input" data-key="monteur" placeholder="Filter..."></th>
+                        <th><input type="text" class="filter-input" data-key="datumAanvang" placeholder="Filter..."></th>
+                        <th><input type="text" class="filter-input" data-key="datumEind" placeholder="Filter..."></th>
+                        <th>
+                            <select class="filter-select" data-key="uitgevoerd">
+                                <option value="">Alle</option>
+                                <option value="Nee">Nee</option>
+                                <option value="Bezig">Bezig</option>
+                                <option value="Ja">Ja</option>
+                                <option value="Vervallen">Vervallen</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select class="filter-select" data-key="afgemeld">
+                                <option value="">Alle</option>
+                                <option value="Nee">Nee</option>
+                                <option value="Ja">Ja</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select class="filter-select" data-key="referentie">
+                                <option value="">Alle</option>
+                                <option value="Nee">Nee</option>
+                                <option value="Ja">Ja</option>
+                                <option value="Onnodig">Onnodig</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select class="filter-select" data-key="archiefGevuld">
+                                <option value="">Alle</option>
+                                <option value="Ja">Ja</option>
+                                <option value="Nee">Nee</option>
+                                <option value="Onvolledig">Onvolledig</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select class="filter-select" data-key="vervolg">
+                                <option value="">Alle</option>
+                                <option value="Nee">Nee</option>
+                                <option value="Gepland">Gepland</option>
+                                <option value="Ja">Ja</option>
+                                <option value="Onbekend">Onbekend</option>
+                            </select>
+                        </th>
+                        <th><input type="text" class="filter-input" data-key="opmerking" placeholder="Filter..."></th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">

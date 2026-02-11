@@ -16,6 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let records = loadRecords();
     let editingId = null;
 
+    // Sort & filter state
+    let sortKey = null;
+    let sortDir = 0; // 0 = none, 1 = asc, -1 = desc
+    let filters = {};
+
     // Calculate score based on field values
     function calculateScore(record) {
         let score = 0;
@@ -68,17 +73,49 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
 
+    // Apply filters and sorting to records
+    function getFilteredSorted() {
+        let result = records.filter(record => {
+            for (const key in filters) {
+                const val = filters[key];
+                if (!val) continue;
+                const field = (record[key] || '').toLowerCase();
+                if (key === 'uitgevoerd' || key === 'afgemeld' || key === 'referentie' || key === 'archiefGevuld' || key === 'vervolg') {
+                    // Exact match for dropdowns
+                    if (field !== val.toLowerCase()) return false;
+                } else {
+                    // Substring match for text inputs
+                    if (!field.includes(val.toLowerCase())) return false;
+                }
+            }
+            return true;
+        });
+
+        if (sortKey && sortDir !== 0) {
+            result.sort((a, b) => {
+                let va = (a[sortKey] || '').toLowerCase();
+                let vb = (b[sortKey] || '').toLowerCase();
+                if (va < vb) return -1 * sortDir;
+                if (va > vb) return 1 * sortDir;
+                return 0;
+            });
+        }
+
+        return result;
+    }
+
     // Render table
     function renderTable() {
         tableBody.innerHTML = '';
+        const displayed = getFilteredSorted();
 
-        if (records.length === 0) {
+        if (displayed.length === 0) {
             const tr = document.createElement('tr');
             tr.className = 'empty-state';
-            tr.innerHTML = `<td colspan="13">Geen records gevonden. Klik op "+ Nieuw Record" om te beginnen.</td>`;
+            tr.innerHTML = `<td colspan="13">Geen records gevonden.</td>`;
             tableBody.appendChild(tr);
         } else {
-            records.forEach(record => {
+            displayed.forEach(record => {
                 const sc = calculateScore(record);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -103,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        updateRowCount();
+        updateRowCount(displayed.length);
     }
 
     // Escape HTML to prevent XSS
@@ -115,9 +152,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Update row count display
-    function updateRowCount() {
-        const count = records.length;
-        rowCount.textContent = `${count} record${count !== 1 ? 's' : ''}`;
+    function updateRowCount(displayedCount) {
+        const total = records.length;
+        if (displayedCount < total) {
+            rowCount.textContent = `${displayedCount} / ${total} records`;
+        } else {
+            rowCount.textContent = `${total} record${total !== 1 ? 's' : ''}`;
+        }
     }
 
     // Open modal
@@ -259,6 +300,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('woNummer').addEventListener('input', (e) => {
         e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    });
+
+    // Event: Sort on header click
+    document.getElementById('headerRow').addEventListener('click', (e) => {
+        const th = e.target.closest('th[data-key]');
+        if (!th) return;
+        const key = th.dataset.key;
+
+        if (sortKey === key) {
+            // Cycle: asc → desc → none
+            sortDir = sortDir === 1 ? -1 : 0;
+            if (sortDir === 0) sortKey = null;
+        } else {
+            sortKey = key;
+            sortDir = 1;
+        }
+
+        // Update arrow indicators
+        document.querySelectorAll('#headerRow .sort-arrow').forEach(el => el.textContent = '');
+        if (sortKey) {
+            const arrow = th.querySelector('.sort-arrow');
+            arrow.textContent = sortDir === 1 ? ' \u25B2' : ' \u25BC';
+        }
+
+        renderTable();
+    });
+
+    // Event: Filter on input/select change
+    document.querySelectorAll('#filterRow .filter-input').forEach(input => {
+        input.addEventListener('input', () => {
+            filters[input.dataset.key] = input.value;
+            renderTable();
+        });
+    });
+    document.querySelectorAll('#filterRow .filter-select').forEach(select => {
+        select.addEventListener('change', () => {
+            filters[select.dataset.key] = select.value;
+            renderTable();
+        });
     });
 
     // Initial render
