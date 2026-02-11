@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="cell-status">${escapeHtml(record.archiefGevuld)}</td>
                     <td class="cell-status">${escapeHtml(record.vervolg)}</td>
                     <td class="cell-status">${record.score}</td>
-                    <td>${escapeHtml(record.opmerking)}</td>
+                    <td class="cell-opmerking" title="${escapeHtml(record.opmerking)}">${escapeHtml(record.opmerking)}</td>
                     <td class="cell-actions">
                         <button class="btn btn-edit" data-id="${record.id}">Bewerk</button>
                         <button class="btn btn-danger" data-id="${record.id}">Verwijder</button>

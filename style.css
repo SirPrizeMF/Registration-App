@@ -12,9 +12,9 @@ body {
 }
 
 .app-container {
-    max-width: 1400px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 10px;
 }
 
 /* Header */
@@ -75,8 +75,8 @@ body {
 .btn-danger {
     background-color: #dc2626;
     color: #fff;
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    padding: 2px 5px;
+    font-size: 0.6rem;
 }
 
 .btn-danger:hover {
@@ -86,9 +86,9 @@ body {
 .btn-edit {
     background-color: #f59e0b;
     color: #fff;
-    padding: 4px 8px;
-    font-size: 0.75rem;
-    margin-right: 4px;
+    padding: 2px 5px;
+    font-size: 0.6rem;
+    margin-right: 2px;
 }
 
 .btn-edit:hover {
@@ -106,7 +106,7 @@ body {
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1200px;
+    table-layout: fixed;
 }
 
 thead {
@@ -114,15 +114,17 @@ thead {
 }
 
 thead th {
-    padding: 12px 14px;
+    padding: 6px 4px;
     text-align: left;
-    font-size: 0.8rem;
+    font-size: 0.65rem;
     font-weight: 600;
     color: #fff;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
     white-space: nowrap;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 thead th:last-child {
@@ -147,10 +149,18 @@ tbody tr:nth-child(even):hover {
 }
 
 tbody td {
-    padding: 10px 14px;
-    font-size: 0.85rem;
+    padding: 4px 4px;
+    font-size: 0.7rem;
     color: #374151;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+td.cell-opmerking {
+    white-space: normal;
+    word-break: break-word;
+    min-width: 0;
 }
 
 .cell-check {
