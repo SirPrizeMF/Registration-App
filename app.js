@@ -16,10 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let records = loadRecords();
     let editingId = null;
 
-    // Load records from localStorage
+    // Load records from localStorage, seed with INITIAL_DATA on first run
     function loadRecords() {
         const data = localStorage.getItem(STORAGE_KEY);
-        return data ? JSON.parse(data) : [];
+        if (data) return JSON.parse(data);
+        if (typeof INITIAL_DATA !== 'undefined' && INITIAL_DATA.length > 0) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DATA));
+            return [...INITIAL_DATA];
+        }
+        return [];
     }
 
     // Save records to localStorage
@@ -42,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (records.length === 0) {
             const tr = document.createElement('tr');
             tr.className = 'empty-state';
-            tr.innerHTML = `<td colspan="13">Geen records gevonden. Klik op "+ Nieuw Record" om te beginnen.</td>`;
+            tr.innerHTML = `<td colspan="14">Geen records gevonden. Klik op "+ Nieuw Record" om te beginnen.</td>`;
             tableBody.appendChild(tr);
         } else {
             records.forEach(record => {
@@ -54,11 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${escapeHtml(record.monteur)}</td>
                     <td>${formatDate(record.datumAanvang)}</td>
                     <td>${formatDate(record.datumEind)}</td>
-                    <td class="cell-check">${record.uitgevoerd ? '\u2705' : '\u2014'}</td>
-                    <td class="cell-check">${record.afgemeld ? '\u2705' : '\u2014'}</td>
-                    <td>${escapeHtml(record.referentie)}</td>
-                    <td class="cell-check">${record.archief ? '\u2705' : '\u2014'}</td>
-                    <td>${escapeHtml(record.vervolg)}</td>
+                    <td class="cell-status">${escapeHtml(record.uitgevoerd)}</td>
+                    <td class="cell-status">${escapeHtml(record.afgemeld)}</td>
+                    <td class="cell-status">${escapeHtml(record.referentie)}</td>
+                    <td class="cell-status">${escapeHtml(record.archiefGevuld)}</td>
+                    <td class="cell-status">${escapeHtml(record.vervolg)}</td>
+                    <td class="cell-status">${record.score}</td>
                     <td>${escapeHtml(record.opmerking)}</td>
                     <td class="cell-actions">
                         <button class="btn btn-edit" data-id="${record.id}">Bewerk</button>
@@ -108,28 +114,39 @@ document.addEventListener('DOMContentLoaded', () => {
             monteur: document.getElementById('monteur').value.trim(),
             datumAanvang: document.getElementById('datumAanvang').value,
             datumEind: document.getElementById('datumEind').value,
-            uitgevoerd: document.getElementById('uitgevoerd').checked,
-            afgemeld: document.getElementById('afgemeld').checked,
-            referentie: document.getElementById('referentie').value.trim(),
-            archief: document.getElementById('archief').checked,
-            vervolg: document.getElementById('vervolg').value.trim(),
+            uitgevoerd: document.getElementById('uitgevoerd').value,
+            afgemeld: document.getElementById('afgemeld').value,
+            referentie: document.getElementById('referentie').value,
+            archiefGevuld: document.getElementById('archiefGevuld').value,
+            vervolg: document.getElementById('vervolg').value,
+            score: parseInt(document.getElementById('score').value, 10),
             opmerking: document.getElementById('opmerking').value.trim(),
         };
     }
 
     // Populate form with record data
     function populateForm(record) {
-        document.getElementById('regNummer').value = (record.regNummer || '').replace(REG_PREFIX, '');
-        document.getElementById('woNummer').value = (record.woNummer || '').replace(WO_PREFIX, '');
+        // Strip known prefixes for the input fields; fall back to last 4 chars
+        const regVal = (record.regNummer || '');
+        document.getElementById('regNummer').value = regVal.startsWith(REG_PREFIX)
+            ? regVal.slice(REG_PREFIX.length)
+            : regVal.slice(-4);
+
+        const woVal = (record.woNummer || '');
+        document.getElementById('woNummer').value = woVal.startsWith(WO_PREFIX)
+            ? woVal.slice(WO_PREFIX.length)
+            : woVal.slice(-4);
+
         document.getElementById('waar').value = record.waar || '';
         document.getElementById('monteur').value = record.monteur || '';
         document.getElementById('datumAanvang').value = record.datumAanvang || '';
         document.getElementById('datumEind').value = record.datumEind || '';
-        document.getElementById('uitgevoerd').checked = record.uitgevoerd || false;
-        document.getElementById('afgemeld').checked = record.afgemeld || false;
-        document.getElementById('referentie').value = record.referentie || '';
-        document.getElementById('archief').checked = record.archief || false;
-        document.getElementById('vervolg').value = record.vervolg || '';
+        document.getElementById('uitgevoerd').value = record.uitgevoerd || 'Nee';
+        document.getElementById('afgemeld').value = record.afgemeld || 'Nee';
+        document.getElementById('referentie').value = record.referentie || 'Nee';
+        document.getElementById('archiefGevuld').value = record.archiefGevuld || 'Ja';
+        document.getElementById('vervolg').value = record.vervolg || 'Nee';
+        document.getElementById('score').value = record.score != null ? record.score : 5;
         document.getElementById('opmerking').value = record.opmerking || '';
     }
 

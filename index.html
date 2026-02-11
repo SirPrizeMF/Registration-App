@@ -26,8 +26,9 @@
                         <th>Uitgevoerd</th>
                         <th>Afgemeld</th>
                         <th>Referentie</th>
-                        <th>Archief</th>
+                        <th>Archief gevuld</th>
                         <th>Vervolg</th>
+                        <th>Score</th>
                         <th>Opmerking</th>
                         <th>Acties</th>
                     </tr>
@@ -79,31 +80,56 @@
                         <label for="datumEind">Datum Eind</label>
                         <input type="date" id="datumEind">
                     </div>
-                    <div class="form-group form-check">
-                        <label>
-                            <input type="checkbox" id="uitgevoerd">
-                            Uitgevoerd
-                        </label>
+                    <div class="form-group">
+                        <label for="uitgevoerd">Uitgevoerd</label>
+                        <select id="uitgevoerd">
+                            <option value="Nee">Nee</option>
+                            <option value="Bezig">Bezig</option>
+                            <option value="Ja">Ja</option>
+                            <option value="Vervallen">Vervallen</option>
+                        </select>
                     </div>
-                    <div class="form-group form-check">
-                        <label>
-                            <input type="checkbox" id="afgemeld">
-                            Afgemeld
-                        </label>
+                    <div class="form-group">
+                        <label for="afgemeld">Afgemeld</label>
+                        <select id="afgemeld">
+                            <option value="Nee">Nee</option>
+                            <option value="Ja">Ja</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="referentie">Referentie</label>
-                        <input type="text" id="referentie">
+                        <select id="referentie">
+                            <option value="Nee">Nee</option>
+                            <option value="Ja">Ja</option>
+                            <option value="Onnodig">Onnodig</option>
+                        </select>
                     </div>
-                    <div class="form-group form-check">
-                        <label>
-                            <input type="checkbox" id="archief">
-                            Archief
-                        </label>
+                    <div class="form-group">
+                        <label for="archiefGevuld">Archief gevuld</label>
+                        <select id="archiefGevuld">
+                            <option value="Ja">Ja</option>
+                            <option value="Onvolledig">Onvolledig</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="vervolg">Vervolg</label>
-                        <input type="text" id="vervolg">
+                        <select id="vervolg">
+                            <option value="Nee">Nee</option>
+                            <option value="Gepland">Gepland</option>
+                            <option value="Ja">Ja</option>
+                            <option value="Onbekend">Onbekend</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="score">Score</label>
+                        <select id="score">
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5" selected>5</option>
+                        </select>
                     </div>
                     <div class="form-group full-width">
                         <label for="opmerking">Opmerking</label>
@@ -118,6 +144,7 @@
         </div>
     </div>
 
+    <script src="data.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
