@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const STORAGE_KEY = 'registrationAppData';
+    const REG_PREFIX = '460265';
+    const WO_PREFIX = '460260';
 
     // DOM elements
     const tableBody = document.getElementById('tableBody');
@@ -100,8 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get form data
     function getFormData() {
         return {
-            regNummer: document.getElementById('regNummer').value.trim(),
-            woNummer: document.getElementById('woNummer').value.trim(),
+            regNummer: REG_PREFIX + document.getElementById('regNummer').value.trim(),
+            woNummer: WO_PREFIX + document.getElementById('woNummer').value.trim(),
             waar: document.getElementById('waar').value.trim(),
             monteur: document.getElementById('monteur').value.trim(),
             datumAanvang: document.getElementById('datumAanvang').value,
@@ -117,8 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Populate form with record data
     function populateForm(record) {
-        document.getElementById('regNummer').value = record.regNummer || '';
-        document.getElementById('woNummer').value = record.woNummer || '';
+        document.getElementById('regNummer').value = (record.regNummer || '').replace(REG_PREFIX, '');
+        document.getElementById('woNummer').value = (record.woNummer || '').replace(WO_PREFIX, '');
         document.getElementById('waar').value = record.waar || '';
         document.getElementById('monteur').value = record.monteur || '';
         document.getElementById('datumAanvang').value = record.datumAanvang || '';
@@ -195,6 +197,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
             closeModal();
         }
+    });
+
+    // Restrict prefix inputs to digits only
+    document.getElementById('regNummer').addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    });
+    document.getElementById('woNummer').addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
     });
 
     // Initial render

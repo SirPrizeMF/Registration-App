@@ -255,6 +255,46 @@ tbody td {
     transition: border-color 0.2s;
 }
 
+/* Prefix input (Reg. Nummer / WO-nummer) */
+.prefix-input {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.prefix-input:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.input-prefix {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    background-color: #f3f4f6;
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-right: 1px solid #d1d5db;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.prefix-input input[type="text"] {
+    border: none;
+    border-radius: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+.prefix-input input[type="text"]:focus {
+    outline: none;
+    box-shadow: none;
+}
+
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
