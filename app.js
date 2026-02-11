@@ -27,6 +27,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return score;
     }
 
+    // Return CSS class for a status cell based on field and value
+    function statusColor(field, value) {
+        const rules = {
+            uitgevoerd:   { green: ['Ja', 'Vervallen'], yellow: ['Bezig'], red: ['Nee'] },
+            afgemeld:     { green: ['Ja'], red: ['Nee'] },
+            referentie:   { green: ['Ja', 'Onnodig'], red: ['Nee'] },
+            archiefGevuld:{ green: ['Ja'], yellow: ['Onvolledig'], red: ['Nee'] },
+            vervolg:      { green: ['Nee', 'Gepland'], yellow: ['Onbekend'], red: ['Ja'] },
+        };
+        const r = rules[field];
+        if (!r) return '';
+        if (r.green  && r.green.includes(value))  return 'cell-green';
+        if (r.yellow && r.yellow.includes(value)) return 'cell-yellow';
+        if (r.red    && r.red.includes(value))    return 'cell-red';
+        return '';
+    }
+
     // Load records from localStorage, seed with INITIAL_DATA on first run
     function loadRecords() {
         const data = localStorage.getItem(STORAGE_KEY);
@@ -70,11 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>${escapeHtml(record.monteur)}</td>
                     <td>${formatDate(record.datumAanvang)}</td>
                     <td>${formatDate(record.datumEind)}</td>
-                    <td class="cell-status">${escapeHtml(record.uitgevoerd)}</td>
-                    <td class="cell-status">${escapeHtml(record.afgemeld)}</td>
-                    <td class="cell-status">${escapeHtml(record.referentie)}</td>
-                    <td class="cell-status">${escapeHtml(record.archiefGevuld)}</td>
-                    <td class="cell-status">${escapeHtml(record.vervolg)}</td>
+                    <td class="cell-status ${statusColor('uitgevoerd', record.uitgevoerd)}">${escapeHtml(record.uitgevoerd)}</td>
+                    <td class="cell-status ${statusColor('afgemeld', record.afgemeld)}">${escapeHtml(record.afgemeld)}</td>
+                    <td class="cell-status ${statusColor('referentie', record.referentie)}">${escapeHtml(record.referentie)}</td>
+                    <td class="cell-status ${statusColor('archiefGevuld', record.archiefGevuld)}">${escapeHtml(record.archiefGevuld)}</td>
+                    <td class="cell-status ${statusColor('vervolg', record.vervolg)}">${escapeHtml(record.vervolg)}</td>
                     <td class="cell-opmerking" title="${escapeHtml(record.opmerking)}">${escapeHtml(record.opmerking)}</td>
                     <td class="cell-actions">
                         <button class="btn btn-edit" data-id="${record.id}">Bewerk</button>

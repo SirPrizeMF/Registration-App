@@ -172,6 +172,21 @@ td.cell-opmerking {
     white-space: nowrap;
 }
 
+.cell-green {
+    background-color: #166534 !important;
+    color: #fff !important;
+}
+
+.cell-red {
+    background-color: #991b1b !important;
+    color: #fff !important;
+}
+
+.cell-yellow {
+    background-color: #ca8a04 !important;
+    color: #fff !important;
+}
+
 .empty-state {
     text-align: center;
     padding: 48px 20px;
