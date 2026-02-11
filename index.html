@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registratie App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Registratie App</h1>
+            <button id="addRowBtn" class="btn btn-primary">+ Nieuw Record</button>
+        </header>
+
+        <div class="table-wrapper">
+            <table id="registrationTable">
+                <thead>
+                    <tr>
+                        <th>Reg. Nummer</th>
+                        <th>WO-nummer</th>
+                        <th>Waar</th>
+                        <th>Monteur</th>
+                        <th>Datum Aanvang</th>
+                        <th>Datum Eind</th>
+                        <th>Uitgevoerd</th>
+                        <th>Afgemeld</th>
+                        <th>Referentie</th>
+                        <th>Archief</th>
+                        <th>Vervolg</th>
+                        <th>Opmerking</th>
+                        <th>Acties</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <span id="rowCount">0 records</span>
+        </div>
+    </div>
+
+    <!-- Modal for adding/editing records -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <h2 id="modalTitle">Nieuw Record</h2>
+            <form id="recordForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="regNummer">Reg. Nummer</label>
+                        <input type="text" id="regNummer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="woNummer">WO-nummer</label>
+                        <input type="text" id="woNummer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="waar">Waar</label>
+                        <input type="text" id="waar">
+                    </div>
+                    <div class="form-group">
+                        <label for="monteur">Monteur</label>
+                        <input type="text" id="monteur">
+                    </div>
+                    <div class="form-group">
+                        <label for="datumAanvang">Datum Aanvang</label>
+                        <input type="date" id="datumAanvang">
+                    </div>
+                    <div class="form-group">
+                        <label for="datumEind">Datum Eind</label>
+                        <input type="date" id="datumEind">
+                    </div>
+                    <div class="form-group form-check">
+                        <label>
+                            <input type="checkbox" id="uitgevoerd">
+                            Uitgevoerd
+                        </label>
+                    </div>
+                    <div class="form-group form-check">
+                        <label>
+                            <input type="checkbox" id="afgemeld">
+                            Afgemeld
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="referentie">Referentie</label>
+                        <input type="text" id="referentie">
+                    </div>
+                    <div class="form-group form-check">
+                        <label>
+                            <input type="checkbox" id="archief">
+                            Archief
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="vervolg">Vervolg</label>
+                        <input type="text" id="vervolg">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="opmerking">Opmerking</label>
+                        <textarea id="opmerking" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancelBtn" class="btn btn-secondary">Annuleren</button>
+                    <button type="submit" class="btn btn-primary">Opslaan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
