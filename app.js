@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let sortDir = 0; // 0 = none, 1 = asc, -1 = desc
     let filters = {};
 
+    // Expand/collapse state – tracks which regNummers are expanded
+    const expandedGroups = new Set();
+
     // Calculate score based on field values
     function calculateScore(record) {
         let score = 0;
@@ -104,10 +107,48 @@ document.addEventListener('DOMContentLoaded', () => {
         return result;
     }
 
-    // Render table
+    // Group a flat array of records by regNummer, preserving order
+    function groupByReg(list) {
+        const map = new Map();
+        list.forEach(record => {
+            const key = record.regNummer || '';
+            if (!map.has(key)) map.set(key, []);
+            map.get(key).push(record);
+        });
+        return map; // Map<regNummer, record[]>
+    }
+
+    // Build a single data-row's inner HTML
+    function buildRowCells(record, isChild) {
+        const sc = calculateScore(record);
+        const regCell = isChild
+            ? `<td class="score-${sc} child-indent"></td>`
+            : `<td class="score-${sc}">${escapeHtml(record.regNummer)}</td>`;
+        return `
+            ${regCell}
+            <td class="score-${sc}">${escapeHtml(record.woNummer)}</td>
+            <td class="score-${sc}">${escapeHtml(record.waar)}</td>
+            <td class="score-${sc}">${escapeHtml(record.monteur)}</td>
+            <td class="score-${sc}">${formatDate(record.datumAanvang)}</td>
+            <td class="score-${sc}">${formatDate(record.datumEind)}</td>
+            <td class="cell-status ${statusColor('uitgevoerd', record.uitgevoerd)}">${escapeHtml(record.uitgevoerd)}</td>
+            <td class="cell-status ${statusColor('afgemeld', record.afgemeld)}">${escapeHtml(record.afgemeld)}</td>
+            <td class="cell-status ${statusColor('referentie', record.referentie)}">${escapeHtml(record.referentie)}</td>
+            <td class="cell-status ${statusColor('archiefGevuld', record.archiefGevuld)}">${escapeHtml(record.archiefGevuld)}</td>
+            <td class="cell-status ${statusColor('vervolg', record.vervolg)}">${escapeHtml(record.vervolg)}</td>
+            <td class="cell-opmerking" title="${escapeHtml(record.opmerking)}">${escapeHtml(record.opmerking)}</td>
+            <td class="cell-actions">
+                <button class="btn btn-edit" data-id="${record.id}">Bewerk</button>
+                <button class="btn btn-danger" data-id="${record.id}">Verwijder</button>
+            </td>
+        `;
+    }
+
+    // Render table – groups records by regNummer
     function renderTable() {
         tableBody.innerHTML = '';
         const displayed = getFilteredSorted();
+        const groups = groupByReg(displayed);
 
         if (displayed.length === 0) {
             const tr = document.createElement('tr');
@@ -115,32 +156,57 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.innerHTML = `<td colspan="13">Geen records gevonden.</td>`;
             tableBody.appendChild(tr);
         } else {
-            displayed.forEach(record => {
-                const sc = calculateScore(record);
+            groups.forEach((recs, regNummer) => {
+                const first = recs[0];
+                const hasMultiple = recs.length > 1;
+                const isExpanded = expandedGroups.has(regNummer);
+
+                // Parent / only row
                 const tr = document.createElement('tr');
+                if (hasMultiple) tr.classList.add('group-parent');
+
+                const sc = calculateScore(first);
+                const expandBtn = hasMultiple
+                    ? `<button class="btn-expand" data-reg="${escapeHtml(regNummer)}">${isExpanded ? '\u25BC' : '\u25B6'}</button> `
+                    : '';
+                const countBadge = hasMultiple
+                    ? `<span class="group-count">${recs.length}</span>`
+                    : '';
+
                 tr.innerHTML = `
-                    <td class="score-${sc}">${escapeHtml(record.regNummer)}</td>
-                    <td class="score-${sc}">${escapeHtml(record.woNummer)}</td>
-                    <td class="score-${sc}">${escapeHtml(record.waar)}</td>
-                    <td class="score-${sc}">${escapeHtml(record.monteur)}</td>
-                    <td class="score-${sc}">${formatDate(record.datumAanvang)}</td>
-                    <td class="score-${sc}">${formatDate(record.datumEind)}</td>
-                    <td class="cell-status ${statusColor('uitgevoerd', record.uitgevoerd)}">${escapeHtml(record.uitgevoerd)}</td>
-                    <td class="cell-status ${statusColor('afgemeld', record.afgemeld)}">${escapeHtml(record.afgemeld)}</td>
-                    <td class="cell-status ${statusColor('referentie', record.referentie)}">${escapeHtml(record.referentie)}</td>
-                    <td class="cell-status ${statusColor('archiefGevuld', record.archiefGevuld)}">${escapeHtml(record.archiefGevuld)}</td>
-                    <td class="cell-status ${statusColor('vervolg', record.vervolg)}">${escapeHtml(record.vervolg)}</td>
-                    <td class="cell-opmerking" title="${escapeHtml(record.opmerking)}">${escapeHtml(record.opmerking)}</td>
+                    <td class="score-${sc}">${expandBtn}${escapeHtml(first.regNummer)}${countBadge}</td>
+                    <td class="score-${sc}">${escapeHtml(first.woNummer)}</td>
+                    <td class="score-${sc}">${escapeHtml(first.waar)}</td>
+                    <td class="score-${sc}">${escapeHtml(first.monteur)}</td>
+                    <td class="score-${sc}">${formatDate(first.datumAanvang)}</td>
+                    <td class="score-${sc}">${formatDate(first.datumEind)}</td>
+                    <td class="cell-status ${statusColor('uitgevoerd', first.uitgevoerd)}">${escapeHtml(first.uitgevoerd)}</td>
+                    <td class="cell-status ${statusColor('afgemeld', first.afgemeld)}">${escapeHtml(first.afgemeld)}</td>
+                    <td class="cell-status ${statusColor('referentie', first.referentie)}">${escapeHtml(first.referentie)}</td>
+                    <td class="cell-status ${statusColor('archiefGevuld', first.archiefGevuld)}">${escapeHtml(first.archiefGevuld)}</td>
+                    <td class="cell-status ${statusColor('vervolg', first.vervolg)}">${escapeHtml(first.vervolg)}</td>
+                    <td class="cell-opmerking" title="${escapeHtml(first.opmerking)}">${escapeHtml(first.opmerking)}</td>
                     <td class="cell-actions">
-                        <button class="btn btn-edit" data-id="${record.id}">Bewerk</button>
-                        <button class="btn btn-danger" data-id="${record.id}">Verwijder</button>
+                        <button class="btn btn-edit" data-id="${first.id}">Bewerk</button>
+                        <button class="btn btn-danger" data-id="${first.id}">Verwijder</button>
                     </td>
                 `;
                 tableBody.appendChild(tr);
+
+                // Child rows (only when expanded)
+                if (hasMultiple && isExpanded) {
+                    for (let i = 1; i < recs.length; i++) {
+                        const child = recs[i];
+                        const ctr = document.createElement('tr');
+                        ctr.classList.add('group-child');
+                        ctr.innerHTML = buildRowCells(child, true);
+                        tableBody.appendChild(ctr);
+                    }
+                }
             });
         }
 
-        updateRowCount(displayed.length);
+        updateRowCount(displayed.length, groups.size);
     }
 
     // Escape HTML to prevent XSS
@@ -152,12 +218,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Update row count display
-    function updateRowCount(displayedCount) {
+    function updateRowCount(displayedCount, groupCount) {
         const total = records.length;
         if (displayedCount < total) {
-            rowCount.textContent = `${displayedCount} / ${total} records`;
+            rowCount.textContent = `${displayedCount} records (${groupCount} registraties) / ${total} totaal`;
         } else {
-            rowCount.textContent = `${total} record${total !== 1 ? 's' : ''}`;
+            rowCount.textContent = `${total} records (${groupCount} registraties)`;
         }
     }
 
@@ -190,8 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
             vervolg: document.getElementById('vervolg').value,
             opmerking: document.getElementById('opmerking').value.trim(),
         };
-        data.score = calculateScore(data);
-        return data;
     }
 
     // Populate form with record data
@@ -224,11 +288,59 @@ document.addEventListener('DOMContentLoaded', () => {
         return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
     }
 
+    // ── Column resize logic ──────────────────────────────────────────
+    function initColumnResize() {
+        const table = document.getElementById('registrationTable');
+        const headerCells = document.querySelectorAll('#headerRow th');
+
+        headerCells.forEach(th => {
+            const handle = document.createElement('div');
+            handle.className = 'resize-handle';
+            th.style.position = 'relative';
+            th.appendChild(handle);
+
+            let startX, startWidth;
+
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // don't trigger sort
+                startX = e.pageX;
+                startWidth = th.offsetWidth;
+                table.style.tableLayout = 'fixed';
+
+                // Set all column widths to current values before manual resize
+                if (!table.dataset.resized) {
+                    headerCells.forEach(cell => {
+                        cell.style.width = cell.offsetWidth + 'px';
+                    });
+                    table.dataset.resized = '1';
+                }
+
+                const onMouseMove = (e2) => {
+                    const diff = e2.pageX - startX;
+                    const newWidth = Math.max(30, startWidth + diff);
+                    th.style.width = newWidth + 'px';
+                };
+
+                const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        });
+    }
+
+    // ── Event handlers ───────────────────────────────────────────────
+
     // Event: Reset data to original import
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm('Weet je zeker? Dit laadt de originele 154 records opnieuw in en verwijdert eventuele wijzigingen.')) {
             localStorage.removeItem(STORAGE_KEY);
             records = loadRecords();
+            expandedGroups.clear();
             renderTable();
         }
     });
@@ -262,8 +374,21 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelBtn.addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', closeModal);
 
-    // Event: Edit or Delete via table delegation
+    // Event: Edit, Delete, or Expand via table delegation
     tableBody.addEventListener('click', (e) => {
+        // Expand / collapse button
+        const expandBtn = e.target.closest('.btn-expand');
+        if (expandBtn) {
+            const reg = expandBtn.dataset.reg;
+            if (expandedGroups.has(reg)) {
+                expandedGroups.delete(reg);
+            } else {
+                expandedGroups.add(reg);
+            }
+            renderTable();
+            return;
+        }
+
         const btn = e.target.closest('button');
         if (!btn) return;
 
@@ -343,4 +468,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial render
     renderTable();
+    initColumnResize();
 });

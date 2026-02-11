@@ -145,6 +145,57 @@ thead th:last-child {
     font-size: 0.55rem;
 }
 
+/* Column resize handle */
+.resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    background: transparent;
+}
+
+.resize-handle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Grouped rows */
+.btn-expand {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.55rem;
+    padding: 0 3px 0 0;
+    vertical-align: middle;
+}
+
+.group-count {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.25);
+    color: inherit;
+    font-size: 0.55rem;
+    font-weight: 700;
+    padding: 0 4px;
+    margin-left: 3px;
+    border-radius: 8px;
+    vertical-align: middle;
+}
+
+.group-parent {
+    cursor: default;
+}
+
+.group-child td:first-child {
+    padding-left: 18px;
+}
+
+.group-child {
+    background-color: #f1f5f9 !important;
+    border-left: 3px solid #2563eb;
+}
+
 /* Filter row */
 #filterRow th {
     padding: 3px 2px;
