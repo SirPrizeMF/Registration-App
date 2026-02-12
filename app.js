@@ -653,7 +653,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const wasHidden = dropdown.classList.contains('hidden');
             // Close all dropdowns first
             document.querySelectorAll('.ymf-dropdown').forEach(d => d.classList.add('hidden'));
-            if (wasHidden) dropdown.classList.remove('hidden');
+            if (wasHidden) {
+                const rect = btn.getBoundingClientRect();
+                dropdown.style.top  = rect.bottom + 'px';
+                dropdown.style.left = rect.left + 'px';
+                dropdown.style.minWidth = rect.width + 'px';
+                dropdown.classList.remove('hidden');
+            }
         });
     });
 
