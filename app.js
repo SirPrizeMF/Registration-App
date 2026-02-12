@@ -571,6 +571,136 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // ── CSV import ───────────────────────────────────────────────────
+
+    // Normalise a header string for loose matching
+    function normaliseHeader(s) {
+        return s.toLowerCase().replace(/[\s.\-_\/]/g, '');
+    }
+
+    // Map a normalised header to an internal field name (returns null if unknown)
+    const HEADER_MAP = {
+        regnummer: 'regNummer', regnr: 'regNummer', registratienummer: 'regNummer',
+        wonummer: 'woNummer', wonr: 'woNummer', werkordernummer: 'woNummer',
+        waar: 'waar', locatie: 'waar', plaats: 'waar',
+        monteur: 'monteur',
+        datumaanvang: 'datumAanvang', aanvang: 'datumAanvang', startdatum: 'datumAanvang', start: 'datumAanvang',
+        datumeind: 'datumEind', eind: 'datumEind', einddatum: 'datumEind', einde: 'datumEind',
+        uitgevoerd: 'uitgevoerd', uitg: 'uitgevoerd',
+        afgemeld: 'afgemeld', afg: 'afgemeld',
+        referentie: 'referentie', ref: 'referentie',
+        archiefgevuld: 'archiefGevuld', archief: 'archiefGevuld',
+        vervolg: 'vervolg',
+        opmerking: 'opmerking', opmerkingen: 'opmerking', notitie: 'opmerking',
+    };
+
+    // Convert a date string to YYYY-MM-DD; handles DD-MM-YYYY, DD/MM/YYYY, YYYY-MM-DD
+    function normaliseDate(s) {
+        if (!s) return '';
+        s = s.trim();
+        // DD-MM-YYYY or DD/MM/YYYY
+        const dmY = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+        if (dmY) return `${dmY[3]}-${dmY[2].padStart(2, '0')}-${dmY[1].padStart(2, '0')}`;
+        // Already YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        return '';
+    }
+
+    // Parse a CSV string into an array of objects using detected field names
+    function parseCsv(text) {
+        const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+        // Filter empty lines
+        const nonEmpty = lines.filter(l => l.trim() !== '');
+        if (nonEmpty.length < 2) return [];
+
+        // Auto-detect delimiter from header line
+        const headerLine = nonEmpty[0];
+        const delim = (headerLine.split(';').length > headerLine.split(',').length) ? ';' : ',';
+
+        // Split a CSV line respecting quoted fields
+        function splitLine(line) {
+            const fields = [];
+            let cur = '', inQuote = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }
+                    else inQuote = !inQuote;
+                } else if (ch === delim && !inQuote) {
+                    fields.push(cur); cur = '';
+                } else {
+                    cur += ch;
+                }
+            }
+            fields.push(cur);
+            return fields;
+        }
+
+        const headers = splitLine(headerLine).map(h => h.trim().replace(/^"|"$/g, ''));
+        const fieldMap = headers.map(h => HEADER_MAP[normaliseHeader(h)] || null);
+
+        const results = [];
+        for (let i = 1; i < nonEmpty.length; i++) {
+            const vals = splitLine(nonEmpty[i]);
+            const obj = {
+                id: generateId(),
+                regNummer: '', woNummer: '', waar: '', monteur: '',
+                datumAanvang: '', datumEind: '',
+                uitgevoerd: 'Nee', afgemeld: 'Nee', referentie: 'Nee',
+                archiefGevuld: 'Ja', vervolg: 'Nee', opmerking: '',
+            };
+            fieldMap.forEach((field, idx) => {
+                if (!field) return;
+                let val = (vals[idx] || '').trim().replace(/^"|"$/g, '');
+                if (field === 'datumAanvang' || field === 'datumEind') {
+                    val = normaliseDate(val);
+                }
+                obj[field] = val;
+            });
+            // Add prefix to regNummer / woNummer if missing
+            if (obj.regNummer && !obj.regNummer.startsWith(REG_PREFIX) && /^\d+$/.test(obj.regNummer)) {
+                obj.regNummer = REG_PREFIX + obj.regNummer;
+            }
+            if (obj.woNummer && !obj.woNummer.startsWith(WO_PREFIX) && /^\d+$/.test(obj.woNummer)) {
+                obj.woNummer = WO_PREFIX + obj.woNummer;
+            }
+            results.push(obj);
+        }
+        return results;
+    }
+
+    // Event: Import CSV button
+    document.getElementById('importCsvBtn').addEventListener('click', () => {
+        document.getElementById('csvFileInput').click();
+    });
+
+    document.getElementById('csvFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const imported = parseCsv(evt.target.result);
+            if (imported.length === 0) {
+                alert('Geen geldige records gevonden in het CSV-bestand.');
+                return;
+            }
+            const replace = confirm(
+                `${imported.length} records gevonden.\n\nKlik OK om de huidige data te vervangen, of Annuleren om de records toe te voegen aan de bestaande data.`
+            );
+            if (replace) {
+                records = imported;
+            } else {
+                records = records.concat(imported);
+            }
+            saveRecords();
+            expandedGroups.clear();
+            renderTable();
+        };
+        reader.readAsText(file);
+        // Reset input so the same file can be re-imported if needed
+        e.target.value = '';
+    });
+
     // Initial render
     renderTable();
     initColumnResize();
