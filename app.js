@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const MONTEUR_OPTIONS = ['', 'Amadeusz', 'Devin', 'Dimitri', 'Dylan', 'Ferry', 'Jayden', 'Johan', 'Kevin', 'Koen', 'Leendert', 'Michel', 'Mohammed', 'Richaino', 'Robert-Jan', 'Rowan', 'Storm', 'Tomasz', 'Willem', 'Yoni'];
     const UITGEVOERD_OPTIONS = ['Nee', 'Bezig', 'Ja', 'Vervallen'];
     const AFGEMELD_OPTIONS = ['Nee', 'Ja'];
-    const REFERENTIE_OPTIONS = ['Nee', 'Ja', 'Onnodig'];
+    const REFERENTIE_OPTIONS = ['Nee', 'Ingevuld, nakijken', 'Ja', 'Onnodig'];
     const ARCHIEF_OPTIONS = ['Ja', 'Onvolledig', 'Nee'];
     const VERVOLG_OPTIONS = ['Nee', 'Gepland', 'Ja', 'Onbekend'];
 
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const STATUS_RANK = {
         uitgevoerd:    ['Nee', 'Bezig', 'Ja', 'Vervallen'],
         afgemeld:      ['Nee', 'Ja'],
-        referentie:    ['Nee', 'Ja', 'Onnodig'],
+        referentie:    ['Nee', 'Ingevuld, nakijken', 'Ja', 'Onnodig'],
         archiefGevuld: ['Nee', 'Onvolledig', 'Ja'],
         vervolg:       ['Ja', 'Onbekend', 'Gepland', 'Nee'],
     };
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const rules = {
             uitgevoerd:   { green: ['Ja', 'Vervallen'], yellow: ['Bezig'], red: ['Nee'] },
             afgemeld:     { green: ['Ja'], red: ['Nee'] },
-            referentie:   { green: ['Ja', 'Onnodig'], red: ['Nee'] },
+            referentie:   { green: ['Ja', 'Onnodig'], yellow: ['Ingevuld, nakijken'], red: ['Nee'] },
             archiefGevuld:{ green: ['Ja'], yellow: ['Onvolledig'], red: ['Nee'] },
             vervolg:      { green: ['Nee', 'Gepland'], yellow: ['Onbekend'], red: ['Ja'] },
         };
@@ -569,6 +569,236 @@ document.addEventListener('DOMContentLoaded', () => {
             filters[select.dataset.key] = select.value;
             renderTable();
         });
+    });
+
+    // ── CSV Import ───────────────────────────────────────────────────────
+
+    const csvFileInput = document.getElementById('csvFileInput');
+    const importResultsModal = document.getElementById('importResultsModal');
+    const importResultsClose = document.getElementById('importResultsClose');
+    const importResultsOverlay = document.getElementById('importResultsOverlay');
+    const importResultsContent = document.getElementById('importResultsContent');
+
+    // Detect CSV delimiter (comma vs semicolon) from first line
+    function detectDelimiter(text) {
+        const firstLine = text.split('\n')[0];
+        const commas = (firstLine.match(/,/g) || []).length;
+        const semicolons = (firstLine.match(/;/g) || []).length;
+        return semicolons > commas ? ';' : ',';
+    }
+
+    // Parse a single CSV line, respecting double-quoted fields
+    function parseCSVLine(line, delimiter) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+                else inQuotes = !inQuotes;
+            } else if (ch === delimiter && !inQuotes) {
+                result.push(current);
+                current = '';
+            } else {
+                current += ch;
+            }
+        }
+        result.push(current);
+        return result;
+    }
+
+    // Parse full CSV text into an array of row objects keyed by header name
+    function parseCSV(text) {
+        const delim = detectDelimiter(text);
+        const lines = text.trim().split(/\r?\n/);
+        if (lines.length < 2) return [];
+        const headers = parseCSVLine(lines[0], delim).map(h => h.trim());
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const values = parseCSVLine(lines[i], delim);
+            const row = {};
+            headers.forEach((h, idx) => { row[h] = (values[idx] || '').trim(); });
+            rows.push(row);
+        }
+        return rows;
+    }
+
+    // Convert DD-MM-YYYY (or D-M-YYYY) to YYYY-MM-DD; pass through ISO dates unchanged
+    function parseDutchDate(dateStr) {
+        if (!dateStr) return '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+        const m = dateStr.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+        if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+        return '';
+    }
+
+    // Decide afgemeld value from "Status omschr." column
+    function mapStatusOmschr(statusOmschr, woNummer) {
+        const jaValues = [
+            'gereed niet gefactureerd',
+            'factuur gejournaliseerd',
+            'administratief gereed',
+            '1e werkorder gereed',
+        ];
+        const neeValues = ['aangemaakt'];
+        const norm = statusOmschr.toLowerCase().trim();
+        if (jaValues.includes(norm))  return { value: 'Ja',  warning: null };
+        if (neeValues.includes(norm)) return { value: 'Nee', warning: null };
+        return {
+            value: null,
+            warning: `Onbekende status "${statusOmschr}" voor WO-nr. ${woNummer} — Afg. handmatig instellen.`,
+        };
+    }
+
+    // Map one CSV row to the fields this app cares about
+    function mapCsvRow(row) {
+        const woNummer = (row['Werkordernummer'] || '').trim();
+        const statusOmschr = (row['Status omschr.'] || '').trim();
+
+        let waar = (row['Dossier'] || '').trim();
+        if (waar.startsWith('NRC-')) waar = waar.slice(4);
+
+        const { value: afgemeldValue, warning } = mapStatusOmschr(statusOmschr, woNummer);
+
+        const refRaw = (row['Referentie'] || '').trim();
+        const referentie = refRaw === '' ? 'Nee' : 'Ingevuld, nakijken';
+
+        return {
+            regNummer:    (row['Registratienr.'] || '').trim(),
+            woNummer,
+            waar,
+            datumAanvang: parseDutchDate((row['Uitvoerings datum'] || '').trim()),
+            afgemeld:     afgemeldValue, // null when a warning was raised
+            referentie,
+            warning,
+        };
+    }
+
+    // Apply the mapped CSV rows to the records array; return a results summary
+    function importCSVData(csvRows) {
+        let added = 0;
+        let updated = 0;
+        let skipped = 0;
+        const warnings = [];
+
+        csvRows.forEach(csvRow => {
+            const mapped = mapCsvRow(csvRow);
+            if (!mapped.woNummer) { skipped++; return; }
+            if (mapped.warning) warnings.push(mapped.warning);
+
+            const existing = records.find(r => r.woNummer === mapped.woNummer);
+
+            if (existing) {
+                let changed = false;
+
+                // Always overwrite these fields when the CSV has a non-empty value
+                ['regNummer', 'waar', 'datumAanvang'].forEach(field => {
+                    if (mapped[field] !== '' && mapped[field] !== existing[field]) {
+                        existing[field] = mapped[field];
+                        changed = true;
+                    }
+                });
+
+                // afgemeld: overwrite only when we have a concrete mapped value
+                if (mapped.afgemeld !== null && mapped.afgemeld !== existing.afgemeld) {
+                    existing.afgemeld = mapped.afgemeld;
+                    changed = true;
+                }
+
+                // referentie: only overwrite "Nee" → "Ingevuld, nakijken"
+                if (existing.referentie === 'Nee' && mapped.referentie === 'Ingevuld, nakijken') {
+                    existing.referentie = 'Ingevuld, nakijken';
+                    changed = true;
+                }
+
+                if (changed) updated++;
+            } else {
+                records.push({
+                    id:           generateId(),
+                    regNummer:    mapped.regNummer,
+                    woNummer:     mapped.woNummer,
+                    waar:         mapped.waar,
+                    monteur:      '',
+                    datumAanvang: mapped.datumAanvang,
+                    datumEind:    '',
+                    uitgevoerd:   'Nee',
+                    afgemeld:     mapped.afgemeld !== null ? mapped.afgemeld : 'Nee',
+                    referentie:   mapped.referentie,
+                    archiefGevuld: 'Nee',
+                    vervolg:      'Nee',
+                    opmerking:    '',
+                });
+                added++;
+            }
+        });
+
+        return { added, updated, skipped, warnings };
+    }
+
+    // Render import results inside the modal and open it
+    function showImportResults(results) {
+        let html = `<div class="import-summary">`;
+        html += `<p><strong>${results.added}</strong> nieuw${results.added !== 1 ? 'e' : ''} record${results.added !== 1 ? 's' : ''} toegevoegd.</p>`;
+        html += `<p><strong>${results.updated}</strong> bestaand${results.updated !== 1 ? 'e' : ''} record${results.updated !== 1 ? 's' : ''} bijgewerkt.</p>`;
+        if (results.skipped > 0) {
+            html += `<p class="import-skipped">${results.skipped} rij${results.skipped !== 1 ? 'en' : ''} overgeslagen (geen WO-nummer).</p>`;
+        }
+        if (results.warnings.length > 0) {
+            html += `<div class="import-warnings">`;
+            html += `<p class="warning-title"><strong>Waarschuwingen (${results.warnings.length}) — handmatig instellen:</strong></p>`;
+            html += `<ul class="warning-list">`;
+            results.warnings.forEach(w => { html += `<li>${escapeHtml(w)}</li>`; });
+            html += `</ul></div>`;
+        }
+        html += `</div>`;
+        importResultsContent.innerHTML = html;
+        importResultsModal.classList.remove('hidden');
+    }
+
+    function closeImportResults() {
+        importResultsModal.classList.add('hidden');
+    }
+
+    // Event: open file picker
+    document.getElementById('importCsvBtn').addEventListener('click', () => {
+        csvFileInput.value = '';
+        csvFileInput.click();
+    });
+
+    // Event: file selected — parse and import
+    csvFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            let text = ev.target.result;
+            // Strip UTF-8 BOM if present (common in Excel CSV exports)
+            if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+            try {
+                const csvRows = parseCSV(text);
+                if (csvRows.length === 0) {
+                    alert('Het CSV-bestand is leeg of kon niet worden gelezen.');
+                    return;
+                }
+                const results = importCSVData(csvRows);
+                saveRecords();
+                renderTable();
+                showImportResults(results);
+            } catch (err) {
+                alert('Fout bij het verwerken van het CSV-bestand: ' + err.message);
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
+    });
+
+    importResultsClose.addEventListener('click', closeImportResults);
+    importResultsOverlay.addEventListener('click', closeImportResults);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !importResultsModal.classList.contains('hidden')) {
+            closeImportResults();
+        }
     });
 
     // Initial render
