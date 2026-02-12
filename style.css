@@ -109,6 +109,21 @@ table {
     table-layout: fixed;
 }
 
+/* Column widths: status cols halved, extra space goes to Opmerking */
+#headerRow th:nth-child(1)  { width: 8%; }   /* Reg. Nr. */
+#headerRow th:nth-child(2)  { width: 8%; }   /* WO-nr. */
+#headerRow th:nth-child(3)  { width: 9%; }   /* Waar */
+#headerRow th:nth-child(4)  { width: 8%; }   /* Monteur */
+#headerRow th:nth-child(5)  { width: 8%; }   /* Aanvang */
+#headerRow th:nth-child(6)  { width: 7%; }   /* Eind */
+#headerRow th:nth-child(7)  { width: 4%; }   /* Uitg. */
+#headerRow th:nth-child(8)  { width: 4%; }   /* Afg. */
+#headerRow th:nth-child(9)  { width: 4%; }   /* Ref. */
+#headerRow th:nth-child(10) { width: 4%; }   /* Archief */
+#headerRow th:nth-child(11) { width: 5%; }   /* Vervolg */
+#headerRow th:nth-child(12) { width: 23%; }  /* Opmerking */
+#headerRow th:nth-child(13) { width: 6%; }   /* Acties */
+
 thead {
     background-color: #1e3a5f;
 }
@@ -243,6 +258,8 @@ td.cell-opmerking {
     white-space: normal;
     word-break: break-word;
     min-width: 0;
+    overflow: visible;
+    vertical-align: top;
 }
 
 .cell-check {
@@ -371,6 +388,34 @@ td.cell-opmerking {
 }
 
 .inline-text:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #fff;
+    color: #374151;
+}
+
+.inline-textarea {
+    width: 100%;
+    padding: 1px 3px;
+    font-size: 0.7rem;
+    font-family: inherit;
+    line-height: 1.4;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: transparent;
+    color: inherit;
+    resize: none;
+    overflow: hidden;
+    display: block;
+    box-sizing: border-box;
+    field-sizing: content; /* auto-size in modern browsers */
+}
+
+.inline-textarea:hover {
+    border-color: #d1d5db;
+}
+
+.inline-textarea:focus {
     outline: none;
     border-color: #2563eb;
     background: #fff;

@@ -250,6 +250,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return `<input type="text" class="inline-text" data-id="${id}" data-field="${field}" value="${escapeHtml(value || '')}" title="${escapeHtml(value || '')}">`;
     }
 
+    // Build an auto-growing <textarea> for multi-line table cells (Opmerking)
+    function buildTextarea(field, value, id) {
+        return `<textarea class="inline-textarea" data-id="${id}" data-field="${field}" rows="1">${escapeHtml(value || '')}</textarea>`;
+    }
+
     // Build a single data-row's inner HTML (with inline editors)
     function buildRowCells(record, isChild) {
         const sc = calculateScore(record);
@@ -269,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td class="cell-status ${statusColor('referentie', record.referentie)}">${buildSelect('referentie', record.referentie, id, REFERENTIE_OPTIONS)}</td>
             <td class="cell-status ${statusColor('archiefGevuld', record.archiefGevuld)}">${buildSelect('archiefGevuld', record.archiefGevuld, id, ARCHIEF_OPTIONS)}</td>
             <td class="cell-status ${statusColor('vervolg', record.vervolg)}">${buildSelect('vervolg', record.vervolg, id, VERVOLG_OPTIONS)}</td>
-            <td class="cell-opmerking">${buildTextInput('opmerking', record.opmerking, id)}</td>
+            <td class="cell-opmerking">${buildTextarea('opmerking', record.opmerking, id)}</td>
             <td class="cell-actions">
                 <button class="btn btn-danger" data-id="${id}">Verwijder</button>
             </td>
@@ -332,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="cell-status ${statusColor('referentie', dispRef)}">${isSummary ? escapeHtml(dispRef) : buildSelect('referentie', first.referentie, first.id, REFERENTIE_OPTIONS)}</td>
                     <td class="cell-status ${statusColor('archiefGevuld', dispArchief)}">${isSummary ? escapeHtml(dispArchief) : buildSelect('archiefGevuld', first.archiefGevuld, first.id, ARCHIEF_OPTIONS)}</td>
                     <td class="cell-status ${statusColor('vervolg', dispVervolg)}">${isSummary ? escapeHtml(dispVervolg) : buildSelect('vervolg', first.vervolg, first.id, VERVOLG_OPTIONS)}</td>
-                    <td class="cell-opmerking">${isSummary ? '' : buildTextInput('opmerking', first.opmerking, first.id)}</td>
+                    <td class="cell-opmerking">${isSummary ? '' : buildTextarea('opmerking', first.opmerking, first.id)}</td>
                     <td class="cell-actions">
                         <button class="btn btn-danger" data-id="${first.id}">Verwijder</button>
                     </td>
@@ -353,6 +358,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         updateRowCount(displayed.length, groups.size);
+        initTextareaHeights();
+    }
+
+    // Set textarea heights to fit their content (JS fallback for field-sizing: content)
+    function initTextareaHeights() {
+        tableBody.querySelectorAll('.inline-textarea').forEach(ta => {
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+        });
     }
 
     // Escape HTML to prevent XSS
@@ -546,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event: Inline select/date change – save and re-render for updated colors/scores
     tableBody.addEventListener('change', (e) => {
         const el = e.target;
-        if (el.classList.contains('inline-text')) return; // text handled by input event
+        if (el.classList.contains('inline-text') || el.classList.contains('inline-textarea')) return; // handled by input event
         if (!el.dataset.id || !el.dataset.field) return;
         const record = records.find(r => r.id === el.dataset.id);
         if (!record) return;
@@ -560,14 +574,20 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.scrollLeft = scrollLeft;
     });
 
-    // Event: Inline text input – save on each keystroke (no re-render needed)
+    // Event: Inline text/textarea input – save on each keystroke (no re-render needed)
     tableBody.addEventListener('input', (e) => {
         const el = e.target;
-        if (!el.classList.contains('inline-text') || !el.dataset.id || !el.dataset.field) return;
+        const isText     = el.classList.contains('inline-text');
+        const isTextarea = el.classList.contains('inline-textarea');
+        if ((!isText && !isTextarea) || !el.dataset.id || !el.dataset.field) return;
         const record = records.find(r => r.id === el.dataset.id);
         if (record) {
             record[el.dataset.field] = el.value;
             saveRecords();
+        }
+        if (isTextarea) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
         }
     });
 
