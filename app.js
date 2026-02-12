@@ -240,6 +240,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
+    // Build an inline <select> that updates every record in a Reg. Nr. group when changed
+    function buildGroupSelect(field, value, reg, options) {
+        let html = `<select class="inline-select" data-reg="${escapeHtml(reg)}" data-field="${field}">`;
+        options.forEach(opt => {
+            const label = opt || '-- Kies --';
+            html += `<option value="${escapeHtml(opt)}"${opt === value ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+        });
+        html += '</select>';
+        return html;
+    }
+
     // Build an inline <input type="date"> for table cells
     function buildDateInput(field, value, id) {
         return `<input type="date" class="inline-date" data-id="${id}" data-field="${field}" value="${escapeHtml(value || '')}">`;
@@ -329,8 +340,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="score-${sc}"></td>
                     <td class="cell-status ${statusColor('uitgevoerd', summary.uitgevoerd)}">${escapeHtml(summary.uitgevoerd)}</td>
                     <td class="cell-status ${statusColor('afgemeld', summary.afgemeld)}">${escapeHtml(summary.afgemeld)}</td>
-                    <td class="cell-status ${statusColor('referentie', summary.referentie)}">${escapeHtml(summary.referentie)}</td>
-                    <td class="cell-status ${statusColor('archiefGevuld', summary.archiefGevuld)}">${escapeHtml(summary.archiefGevuld)}</td>
+                    <td class="cell-status ${statusColor('referentie', recs[0].referentie)}">${buildGroupSelect('referentie', recs[0].referentie, reg, REFERENTIE_OPTIONS)}</td>
+                    <td class="cell-status ${statusColor('archiefGevuld', recs[0].archiefGevuld)}">${buildGroupSelect('archiefGevuld', recs[0].archiefGevuld, reg, ARCHIEF_OPTIONS)}</td>
                     <td class="cell-status ${statusColor('vervolg', summary.vervolg)}">${escapeHtml(summary.vervolg)}</td>
                     <td class="cell-opmerking"></td>
                     <td class="cell-actions">
@@ -589,14 +600,33 @@ document.addEventListener('DOMContentLoaded', () => {
     tableBody.addEventListener('change', (e) => {
         const el = e.target;
         if (el.classList.contains('inline-text') || el.classList.contains('inline-textarea')) return; // handled by input event
-        if (!el.dataset.id || !el.dataset.field) return;
-        const record = records.find(r => r.id === el.dataset.id);
-        if (!record) return;
-        record[el.dataset.field] = el.value;
-        saveRecords();
+
         const wrapper = document.querySelector('.table-wrapper');
         const scrollTop = wrapper.scrollTop;
         const scrollLeft = wrapper.scrollLeft;
+
+        // Group-level select (collapsed row): update all records in the group
+        if (el.dataset.reg && el.dataset.field) {
+            const reg = el.dataset.reg;
+            records.forEach(r => { if (r.regNummer === reg) r[el.dataset.field] = el.value; });
+            saveRecords();
+            renderTable();
+            wrapper.scrollTop = scrollTop;
+            wrapper.scrollLeft = scrollLeft;
+            return;
+        }
+
+        if (!el.dataset.id || !el.dataset.field) return;
+        const record = records.find(r => r.id === el.dataset.id);
+        if (!record) return;
+        const field = el.dataset.field;
+        // For referentie and archiefGevuld, propagate the change to every WO-nr in the group
+        if (field === 'referentie' || field === 'archiefGevuld') {
+            records.forEach(r => { if (r.regNummer === record.regNummer) r[field] = el.value; });
+        } else {
+            record[field] = el.value;
+        }
+        saveRecords();
         renderTable();
         wrapper.scrollTop = scrollTop;
         wrapper.scrollLeft = scrollLeft;

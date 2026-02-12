@@ -140,6 +140,10 @@ thead th {
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
     text-overflow: ellipsis;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #1e3a5f;
 }
 
 thead th:last-child {
@@ -215,6 +219,9 @@ thead th:last-child {
 #filterRow th {
     padding: 3px 2px;
     background-color: #e5e7eb;
+    position: sticky;
+    top: 26px;
+    z-index: 2;
 }
 
 .filter-input,
