@@ -112,7 +112,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             return [];
         }
-        const filtered = data.filter(r => !r.datumAanvang || r.datumAanvang >= '2026-01-01');
+        const dateOk = data.filter(r => !r.datumAanvang || r.datumAanvang >= '2026-01-01');
+        // Drop reg. nr. groups where every WO-nr has an empty datumAanvang.
+        const regHasDate = new Set(
+            dateOk.filter(r => r.datumAanvang).map(r => r.regNummer)
+        );
+        const filtered = dateOk.filter(r => regHasDate.has(r.regNummer));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
         return filtered;
     }
@@ -777,6 +782,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     added++;
                 }
             });
+
+            // Drop reg. nr. groups where every WO-nr still has no datumAanvang.
+            const regWithDate = new Set(records.filter(r => r.datumAanvang).map(r => r.regNummer));
+            records = records.filter(r => regWithDate.has(r.regNummer));
 
             saveRecords();
             expandedGroups.clear();
