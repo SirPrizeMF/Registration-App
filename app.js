@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const STORAGE_KEY = 'registrationAppData';
+    const MAPPING_STORAGE_KEY = 'registrationAppStatusMapping';
     const REG_PREFIX = '460265';
     const WO_PREFIX = '460260';
 
@@ -634,18 +635,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return '';
     }
 
-    // Decide afgemeld value from "Status omschr." column
+    // Load the Status omschr. → afgemeld mapping from localStorage (or built-in defaults)
+    function loadStatusMapping() {
+        const data = localStorage.getItem(MAPPING_STORAGE_KEY);
+        if (data) return JSON.parse(data);
+        return {
+            ja:  ['gereed niet gefactureerd', 'factuur gejournaliseerd', 'administratief gereed', '1e werkorder gereed'],
+            nee: ['aangemaakt'],
+        };
+    }
+
+    function saveStatusMapping(mapping) {
+        localStorage.setItem(MAPPING_STORAGE_KEY, JSON.stringify(mapping));
+    }
+
+    let statusMapping = loadStatusMapping();
+
+    // Decide afgemeld value from "Status omschr." column using the current statusMapping
     function mapStatusOmschr(statusOmschr, woNummer) {
-        const jaValues = [
-            'gereed niet gefactureerd',
-            'factuur gejournaliseerd',
-            'administratief gereed',
-            '1e werkorder gereed',
-        ];
-        const neeValues = ['aangemaakt'];
         const norm = statusOmschr.toLowerCase().trim();
-        if (jaValues.includes(norm))  return { value: 'Ja',  warning: null };
-        if (neeValues.includes(norm)) return { value: 'Nee', warning: null };
+        if (statusMapping.ja.includes(norm))  return { value: 'Ja',  warning: null };
+        if (statusMapping.nee.includes(norm)) return { value: 'Nee', warning: null };
         return {
             value: null,
             warning: `Onbekende status "${statusOmschr}" voor WO-nr. ${woNummer} — Afg. handmatig instellen.`,
@@ -788,6 +798,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 showImportResults(results);
             } catch (err) {
                 alert('Fout bij het verwerken van het CSV-bestand: ' + err.message);
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
+    });
+
+    // ── Reference CSV (status mapping) ──────────────────────────────────
+
+    const refCsvInput = document.getElementById('refCsvFileInput');
+    const refCsvBtn   = document.getElementById('refCsvBtn');
+
+    function updateRefBtnLabel() {
+        const total = statusMapping.ja.length + statusMapping.nee.length;
+        refCsvBtn.textContent = total > 0
+            ? `Reference (${total})`
+            : 'Reference laden';
+    }
+    updateRefBtnLabel();
+
+    refCsvBtn.addEventListener('click', () => {
+        refCsvInput.value = '';
+        refCsvInput.click();
+    });
+
+    refCsvInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            let text = ev.target.result;
+            if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+            try {
+                const rows = parseCSV(text);
+                if (rows.length === 0) {
+                    alert('Het referentie-bestand is leeg of kon niet worden gelezen.');
+                    return;
+                }
+                // Find columns by name (case-insensitive)
+                const keys = Object.keys(rows[0]);
+                const statusCol   = keys.find(k => k.toLowerCase().includes('status'));
+                const afgemeldCol = keys.find(k => k.toLowerCase().includes('afg'));
+                if (!statusCol || !afgemeldCol) {
+                    alert(
+                        'Verwachte kolommen niet gevonden in het referentie-bestand.\n' +
+                        'Zorg voor een kolom met "Status" (bijv. "Status omschr.") ' +
+                        'en een kolom met "Afg" (bijv. "Afgemeld").'
+                    );
+                    return;
+                }
+                const newMapping = { ja: [], nee: [] };
+                rows.forEach(row => {
+                    const status   = (row[statusCol]   || '').trim().toLowerCase();
+                    const afgemeld = (row[afgemeldCol] || '').trim().toLowerCase();
+                    if (!status) return;
+                    if (afgemeld === 'ja')  newMapping.ja.push(status);
+                    else if (afgemeld === 'nee') newMapping.nee.push(status);
+                });
+                statusMapping = newMapping;
+                saveStatusMapping(newMapping);
+                updateRefBtnLabel();
+                alert(
+                    `Reference geladen:\n` +
+                    `${newMapping.ja.length} status(sen) → Ja\n` +
+                    `${newMapping.nee.length} status(sen) → Nee`
+                );
+            } catch (err) {
+                alert('Fout bij het verwerken van het referentie-bestand: ' + err.message);
             }
         };
         reader.readAsText(file, 'UTF-8');
