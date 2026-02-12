@@ -282,82 +282,97 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // Render table – groups records by regNummer
+    // Render table – groups records by regNummer.
+    // Collapsed groups: one summary row at the sorted position of their first record.
+    // Expanded groups: each record appears individually at its own sorted position.
     function renderTable() {
         tableBody.innerHTML = '';
         const displayed = getFilteredSorted();
-        const groups = groupByReg(displayed);
+        const allGroups = groupByReg(displayed);
 
         if (displayed.length === 0) {
             const tr = document.createElement('tr');
             tr.className = 'empty-state';
             tr.innerHTML = `<td colspan="13">Geen records gevonden.</td>`;
             tableBody.appendChild(tr);
-        } else {
-            groups.forEach((recs, regNummer) => {
-                const first = recs[0];
-                const hasMultiple = recs.length > 1;
-                const isExpanded = expandedGroups.has(regNummer);
+            updateRowCount(0, 0);
+            initTextareaHeights();
+            return;
+        }
 
-                // For multi-record groups, compute worst status values (only when collapsed)
-                const summary = (hasMultiple && !isExpanded) ? groupSummary(recs) : null;
-                const dispUitg     = summary ? summary.uitgevoerd    : first.uitgevoerd;
-                const dispAfg      = summary ? summary.afgemeld      : first.afgemeld;
-                const dispRef      = summary ? summary.referentie    : first.referentie;
-                const dispArchief  = summary ? summary.archiefGevuld : first.archiefGevuld;
-                const dispVervolg  = summary ? summary.vervolg       : first.vervolg;
+        const renderedCollapsed = new Set();
 
-                // Score is computed from displayed (worst) values
-                const scoreRecord = summary
-                    ? { uitgevoerd: dispUitg, afgemeld: dispAfg, referentie: dispRef, archiefGevuld: dispArchief, vervolg: dispVervolg }
-                    : first;
-                const sc = calculateScore(scoreRecord);
+        for (const record of displayed) {
+            const reg = record.regNummer || '';
+            const recs = allGroups.get(reg) || [record];
+            const hasMultiple = recs.length > 1;
+            const isExpanded = expandedGroups.has(reg);
 
-                // Parent / only row
+            if (hasMultiple && !isExpanded) {
+                // Collapsed: one summary row at the position of the first occurrence
+                if (renderedCollapsed.has(reg)) continue;
+                renderedCollapsed.add(reg);
+
+                const summary = groupSummary(recs);
+                const sc = calculateScore(summary);
+                const expandBtn = `<button class="btn-expand" data-reg="${escapeHtml(reg)}">\u25B6</button> `;
+                const countBadge = `<span class="group-count">${recs.length}</span>`;
+
                 const tr = document.createElement('tr');
-                if (hasMultiple) tr.classList.add('group-parent');
-                const isSummary = hasMultiple && !isExpanded;
-
+                tr.classList.add('group-parent');
+                tr.innerHTML = `
+                    <td class="score-${sc}">${expandBtn}${escapeHtml(reg)}${countBadge}</td>
+                    <td class="score-${sc}"></td>
+                    <td class="score-${sc}">${escapeHtml(recs[0].waar)}</td>
+                    <td class="score-${sc}"></td>
+                    <td class="score-${sc}"></td>
+                    <td class="score-${sc}"></td>
+                    <td class="cell-status ${statusColor('uitgevoerd', summary.uitgevoerd)}">${escapeHtml(summary.uitgevoerd)}</td>
+                    <td class="cell-status ${statusColor('afgemeld', summary.afgemeld)}">${escapeHtml(summary.afgemeld)}</td>
+                    <td class="cell-status ${statusColor('referentie', summary.referentie)}">${escapeHtml(summary.referentie)}</td>
+                    <td class="cell-status ${statusColor('archiefGevuld', summary.archiefGevuld)}">${escapeHtml(summary.archiefGevuld)}</td>
+                    <td class="cell-status ${statusColor('vervolg', summary.vervolg)}">${escapeHtml(summary.vervolg)}</td>
+                    <td class="cell-opmerking"></td>
+                    <td class="cell-actions">
+                        <button class="btn btn-danger" data-id="${recs[0].id}">Verwijder</button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            } else {
+                // Expanded multi-record row, or single-record row — each at its own sorted position
+                const sc = calculateScore(record);
+                const id = record.id;
                 const expandBtn = hasMultiple
-                    ? `<button class="btn-expand" data-reg="${escapeHtml(regNummer)}">${isExpanded ? '\u25BC' : '\u25B6'}</button> `
+                    ? `<button class="btn-expand" data-reg="${escapeHtml(reg)}">\u25BC</button> `
                     : '';
                 const countBadge = hasMultiple
                     ? `<span class="group-count">${recs.length}</span>`
                     : '';
 
+                const tr = document.createElement('tr');
+                if (hasMultiple) tr.classList.add('group-parent');
                 tr.innerHTML = `
-                    <td class="score-${sc}">${expandBtn}${escapeHtml(first.regNummer)}${countBadge}</td>
-                    <td class="score-${sc}">${isSummary ? '' : escapeHtml(first.woNummer)}</td>
-                    <td class="score-${sc}">${escapeHtml(first.waar)}</td>
-                    <td class="score-${sc}">${isSummary ? '' : buildSelect('monteur', first.monteur, first.id, MONTEUR_OPTIONS)}</td>
-                    <td class="score-${sc}">${isSummary ? '' : buildDateInput('datumAanvang', first.datumAanvang, first.id)}</td>
-                    <td class="score-${sc}">${isSummary ? '' : buildDateInput('datumEind', first.datumEind, first.id)}</td>
-                    <td class="cell-status ${statusColor('uitgevoerd', dispUitg)}">${isSummary ? escapeHtml(dispUitg) : buildSelect('uitgevoerd', first.uitgevoerd, first.id, UITGEVOERD_OPTIONS)}</td>
-                    <td class="cell-status ${statusColor('afgemeld', dispAfg)}">${isSummary ? escapeHtml(dispAfg) : buildSelect('afgemeld', first.afgemeld, first.id, AFGEMELD_OPTIONS)}</td>
-                    <td class="cell-status ${statusColor('referentie', dispRef)}">${isSummary ? escapeHtml(dispRef) : buildSelect('referentie', first.referentie, first.id, REFERENTIE_OPTIONS)}</td>
-                    <td class="cell-status ${statusColor('archiefGevuld', dispArchief)}">${isSummary ? escapeHtml(dispArchief) : buildSelect('archiefGevuld', first.archiefGevuld, first.id, ARCHIEF_OPTIONS)}</td>
-                    <td class="cell-status ${statusColor('vervolg', dispVervolg)}">${isSummary ? escapeHtml(dispVervolg) : buildSelect('vervolg', first.vervolg, first.id, VERVOLG_OPTIONS)}</td>
-                    <td class="cell-opmerking">${isSummary ? '' : buildTextarea('opmerking', first.opmerking, first.id)}</td>
+                    <td class="score-${sc}">${expandBtn}${escapeHtml(record.regNummer)}${countBadge}</td>
+                    <td class="score-${sc}">${escapeHtml(record.woNummer)}</td>
+                    <td class="score-${sc}">${escapeHtml(record.waar)}</td>
+                    <td class="score-${sc}">${buildSelect('monteur', record.monteur, id, MONTEUR_OPTIONS)}</td>
+                    <td class="score-${sc}">${buildDateInput('datumAanvang', record.datumAanvang, id)}</td>
+                    <td class="score-${sc}">${buildDateInput('datumEind', record.datumEind, id)}</td>
+                    <td class="cell-status ${statusColor('uitgevoerd', record.uitgevoerd)}">${buildSelect('uitgevoerd', record.uitgevoerd, id, UITGEVOERD_OPTIONS)}</td>
+                    <td class="cell-status ${statusColor('afgemeld', record.afgemeld)}">${buildSelect('afgemeld', record.afgemeld, id, AFGEMELD_OPTIONS)}</td>
+                    <td class="cell-status ${statusColor('referentie', record.referentie)}">${buildSelect('referentie', record.referentie, id, REFERENTIE_OPTIONS)}</td>
+                    <td class="cell-status ${statusColor('archiefGevuld', record.archiefGevuld)}">${buildSelect('archiefGevuld', record.archiefGevuld, id, ARCHIEF_OPTIONS)}</td>
+                    <td class="cell-status ${statusColor('vervolg', record.vervolg)}">${buildSelect('vervolg', record.vervolg, id, VERVOLG_OPTIONS)}</td>
+                    <td class="cell-opmerking">${buildTextarea('opmerking', record.opmerking, id)}</td>
                     <td class="cell-actions">
-                        <button class="btn btn-danger" data-id="${first.id}">Verwijder</button>
+                        <button class="btn btn-danger" data-id="${id}">Verwijder</button>
                     </td>
                 `;
                 tableBody.appendChild(tr);
-
-                // Child rows (only when expanded)
-                if (hasMultiple && isExpanded) {
-                    for (let i = 1; i < recs.length; i++) {
-                        const child = recs[i];
-                        const ctr = document.createElement('tr');
-                        ctr.classList.add('group-child');
-                        ctr.innerHTML = buildRowCells(child, true);
-                        tableBody.appendChild(ctr);
-                    }
-                }
-            });
+            }
         }
 
-        updateRowCount(displayed.length, groups.size);
+        updateRowCount(displayed.length, allGroups.size);
         initTextareaHeights();
     }
 
