@@ -688,18 +688,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!mapped.woNummer) { skipped++; return; }
             if (mapped.warning) warnings.push(mapped.warning);
 
-            const existing = records.find(r => r.woNummer === mapped.woNummer);
+            const existing = records.find(r =>
+                r.woNummer === mapped.woNummer || r.regNummer === mapped.regNummer
+            );
 
             if (existing) {
                 let changed = false;
 
-                // Always overwrite these fields when the CSV has a non-empty value
-                ['regNummer', 'waar', 'datumAanvang'].forEach(field => {
-                    if (mapped[field] !== '' && mapped[field] !== existing[field]) {
-                        existing[field] = mapped[field];
-                        changed = true;
-                    }
-                });
+                // datumAanvang: overwrite when CSV has a non-empty value
+                if (mapped.datumAanvang !== '' && mapped.datumAanvang !== existing.datumAanvang) {
+                    existing.datumAanvang = mapped.datumAanvang;
+                    changed = true;
+                }
 
                 // afgemeld: overwrite only when we have a concrete mapped value
                 if (mapped.afgemeld !== null && mapped.afgemeld !== existing.afgemeld) {
