@@ -27,6 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Flag to suppress sort when a column resize just happened
     let resizing = false;
 
+    // Inline editing option lists
+    const MONTEUR_OPTIONS = ['', 'Amadeusz', 'Devin', 'Dimitri', 'Dylan', 'Ferry', 'Jayden', 'Johan', 'Kevin', 'Koen', 'Leendert', 'Michel', 'Mohammed', 'Richaino', 'Robert-Jan', 'Rowan', 'Storm', 'Tomasz', 'Willem', 'Yoni'];
+    const UITGEVOERD_OPTIONS = ['Nee', 'Bezig', 'Ja', 'Vervallen'];
+    const AFGEMELD_OPTIONS = ['Nee', 'Ja'];
+    const REFERENTIE_OPTIONS = ['Nee', 'Ja', 'Onnodig'];
+    const ARCHIEF_OPTIONS = ['Ja', 'Onvolledig', 'Nee'];
+    const VERVOLG_OPTIONS = ['Nee', 'Gepland', 'Ja', 'Onbekend'];
+
     // Priority rankings for status fields (lower index = worse)
     const STATUS_RANK = {
         uitgevoerd:    ['Nee', 'Bezig', 'Ja', 'Vervallen'],
@@ -158,9 +166,31 @@ document.addEventListener('DOMContentLoaded', () => {
         return map; // Map<regNummer, record[]>
     }
 
-    // Build a single data-row's inner HTML
+    // Build an inline <select> for table cells
+    function buildSelect(field, value, id, options) {
+        let html = `<select class="inline-select" data-id="${id}" data-field="${field}">`;
+        options.forEach(opt => {
+            const label = opt || '-- Kies --';
+            html += `<option value="${escapeHtml(opt)}"${opt === value ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+        });
+        html += '</select>';
+        return html;
+    }
+
+    // Build an inline <input type="date"> for table cells
+    function buildDateInput(field, value, id) {
+        return `<input type="date" class="inline-date" data-id="${id}" data-field="${field}" value="${escapeHtml(value || '')}">`;
+    }
+
+    // Build an inline <input type="text"> for table cells
+    function buildTextInput(field, value, id) {
+        return `<input type="text" class="inline-text" data-id="${id}" data-field="${field}" value="${escapeHtml(value || '')}" title="${escapeHtml(value || '')}">`;
+    }
+
+    // Build a single data-row's inner HTML (with inline editors)
     function buildRowCells(record, isChild) {
         const sc = calculateScore(record);
+        const id = record.id;
         const regCell = isChild
             ? `<td class="score-${sc} child-indent"></td>`
             : `<td class="score-${sc}">${escapeHtml(record.regNummer)}</td>`;
@@ -168,18 +198,17 @@ document.addEventListener('DOMContentLoaded', () => {
             ${regCell}
             <td class="score-${sc}">${escapeHtml(record.woNummer)}</td>
             <td class="score-${sc}">${escapeHtml(record.waar)}</td>
-            <td class="score-${sc}">${escapeHtml(record.monteur)}</td>
-            <td class="score-${sc}">${formatDate(record.datumAanvang)}</td>
-            <td class="score-${sc}">${formatDate(record.datumEind)}</td>
-            <td class="cell-status ${statusColor('uitgevoerd', record.uitgevoerd)}">${escapeHtml(record.uitgevoerd)}</td>
-            <td class="cell-status ${statusColor('afgemeld', record.afgemeld)}">${escapeHtml(record.afgemeld)}</td>
-            <td class="cell-status ${statusColor('referentie', record.referentie)}">${escapeHtml(record.referentie)}</td>
-            <td class="cell-status ${statusColor('archiefGevuld', record.archiefGevuld)}">${escapeHtml(record.archiefGevuld)}</td>
-            <td class="cell-status ${statusColor('vervolg', record.vervolg)}">${escapeHtml(record.vervolg)}</td>
-            <td class="cell-opmerking" title="${escapeHtml(record.opmerking)}">${escapeHtml(record.opmerking)}</td>
+            <td class="score-${sc}">${buildSelect('monteur', record.monteur, id, MONTEUR_OPTIONS)}</td>
+            <td class="score-${sc}">${buildDateInput('datumAanvang', record.datumAanvang, id)}</td>
+            <td class="score-${sc}">${buildDateInput('datumEind', record.datumEind, id)}</td>
+            <td class="cell-status ${statusColor('uitgevoerd', record.uitgevoerd)}">${buildSelect('uitgevoerd', record.uitgevoerd, id, UITGEVOERD_OPTIONS)}</td>
+            <td class="cell-status ${statusColor('afgemeld', record.afgemeld)}">${buildSelect('afgemeld', record.afgemeld, id, AFGEMELD_OPTIONS)}</td>
+            <td class="cell-status ${statusColor('referentie', record.referentie)}">${buildSelect('referentie', record.referentie, id, REFERENTIE_OPTIONS)}</td>
+            <td class="cell-status ${statusColor('archiefGevuld', record.archiefGevuld)}">${buildSelect('archiefGevuld', record.archiefGevuld, id, ARCHIEF_OPTIONS)}</td>
+            <td class="cell-status ${statusColor('vervolg', record.vervolg)}">${buildSelect('vervolg', record.vervolg, id, VERVOLG_OPTIONS)}</td>
+            <td class="cell-opmerking">${buildTextInput('opmerking', record.opmerking, id)}</td>
             <td class="cell-actions">
-                <button class="btn btn-edit" data-id="${record.id}">Bewerk</button>
-                <button class="btn btn-danger" data-id="${record.id}">Verwijder</button>
+                <button class="btn btn-danger" data-id="${id}">Verwijder</button>
             </td>
         `;
     }
@@ -218,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Parent / only row
                 const tr = document.createElement('tr');
                 if (hasMultiple) tr.classList.add('group-parent');
+                const isSummary = hasMultiple && !isExpanded;
 
                 const expandBtn = hasMultiple
                     ? `<button class="btn-expand" data-reg="${escapeHtml(regNummer)}">${isExpanded ? '\u25BC' : '\u25B6'}</button> `
@@ -230,17 +260,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="score-${sc}">${expandBtn}${escapeHtml(first.regNummer)}${countBadge}</td>
                     <td class="score-${sc}">${escapeHtml(first.woNummer)}</td>
                     <td class="score-${sc}">${escapeHtml(first.waar)}</td>
-                    <td class="score-${sc}">${escapeHtml(first.monteur)}</td>
-                    <td class="score-${sc}">${formatDate(first.datumAanvang)}</td>
-                    <td class="score-${sc}">${formatDate(first.datumEind)}</td>
-                    <td class="cell-status ${statusColor('uitgevoerd', dispUitg)}">${escapeHtml(dispUitg)}</td>
-                    <td class="cell-status ${statusColor('afgemeld', dispAfg)}">${escapeHtml(dispAfg)}</td>
-                    <td class="cell-status ${statusColor('referentie', dispRef)}">${escapeHtml(dispRef)}</td>
-                    <td class="cell-status ${statusColor('archiefGevuld', dispArchief)}">${escapeHtml(dispArchief)}</td>
-                    <td class="cell-status ${statusColor('vervolg', dispVervolg)}">${escapeHtml(dispVervolg)}</td>
-                    <td class="cell-opmerking" title="${escapeHtml(first.opmerking)}">${escapeHtml(first.opmerking)}</td>
+                    <td class="score-${sc}">${isSummary ? escapeHtml(first.monteur) : buildSelect('monteur', first.monteur, first.id, MONTEUR_OPTIONS)}</td>
+                    <td class="score-${sc}">${isSummary ? formatDate(first.datumAanvang) : buildDateInput('datumAanvang', first.datumAanvang, first.id)}</td>
+                    <td class="score-${sc}">${isSummary ? formatDate(first.datumEind) : buildDateInput('datumEind', first.datumEind, first.id)}</td>
+                    <td class="cell-status ${statusColor('uitgevoerd', dispUitg)}">${isSummary ? escapeHtml(dispUitg) : buildSelect('uitgevoerd', first.uitgevoerd, first.id, UITGEVOERD_OPTIONS)}</td>
+                    <td class="cell-status ${statusColor('afgemeld', dispAfg)}">${isSummary ? escapeHtml(dispAfg) : buildSelect('afgemeld', first.afgemeld, first.id, AFGEMELD_OPTIONS)}</td>
+                    <td class="cell-status ${statusColor('referentie', dispRef)}">${isSummary ? escapeHtml(dispRef) : buildSelect('referentie', first.referentie, first.id, REFERENTIE_OPTIONS)}</td>
+                    <td class="cell-status ${statusColor('archiefGevuld', dispArchief)}">${isSummary ? escapeHtml(dispArchief) : buildSelect('archiefGevuld', first.archiefGevuld, first.id, ARCHIEF_OPTIONS)}</td>
+                    <td class="cell-status ${statusColor('vervolg', dispVervolg)}">${isSummary ? escapeHtml(dispVervolg) : buildSelect('vervolg', first.vervolg, first.id, VERVOLG_OPTIONS)}</td>
+                    <td class="cell-opmerking" ${isSummary ? `title="${escapeHtml(first.opmerking)}"` : ''}>${isSummary ? escapeHtml(first.opmerking) : buildTextInput('opmerking', first.opmerking, first.id)}</td>
                     <td class="cell-actions">
-                        <button class="btn btn-edit" data-id="${first.id}">Bewerk</button>
                         <button class="btn btn-danger" data-id="${first.id}">Verwijder</button>
                     </td>
                 `;
@@ -450,21 +479,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const id = btn.dataset.id;
 
-        if (btn.classList.contains('btn-edit')) {
-            const record = records.find(r => r.id === id);
-            if (record) {
-                editingId = id;
-                populateForm(record);
-                openModal('Record Bewerken');
-            }
-        }
-
         if (btn.classList.contains('btn-danger')) {
             if (confirm('Weet je zeker dat je dit record wilt verwijderen?')) {
                 records = records.filter(r => r.id !== id);
                 saveRecords();
                 renderTable();
             }
+        }
+    });
+
+    // Event: Inline select/date change – save and re-render for updated colors/scores
+    tableBody.addEventListener('change', (e) => {
+        const el = e.target;
+        if (el.classList.contains('inline-text')) return; // text handled by input event
+        if (!el.dataset.id || !el.dataset.field) return;
+        const record = records.find(r => r.id === el.dataset.id);
+        if (!record) return;
+        record[el.dataset.field] = el.value;
+        saveRecords();
+        const wrapper = document.querySelector('.table-wrapper');
+        const scrollTop = wrapper.scrollTop;
+        const scrollLeft = wrapper.scrollLeft;
+        renderTable();
+        wrapper.scrollTop = scrollTop;
+        wrapper.scrollLeft = scrollLeft;
+    });
+
+    // Event: Inline text input – save on each keystroke (no re-render needed)
+    tableBody.addEventListener('input', (e) => {
+        const el = e.target;
+        if (!el.classList.contains('inline-text') || !el.dataset.id || !el.dataset.field) return;
+        const record = records.find(r => r.id === el.dataset.id);
+        if (record) {
+            record[el.dataset.field] = el.value;
+            saveRecords();
         }
     });
 

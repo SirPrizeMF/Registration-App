@@ -300,6 +300,83 @@ td.cell-opmerking {
     color: #fff !important;
 }
 
+/* Inline editing controls */
+.inline-select {
+    width: 100%;
+    padding: 1px 2px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.inline-select:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.inline-select:focus {
+    outline: 1px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.1);
+}
+
+.inline-select option {
+    color: #1a1a2e;
+    background: #fff;
+}
+
+.inline-date {
+    width: 100%;
+    padding: 1px 2px;
+    font-size: 0.65rem;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.inline-date:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.inline-date:focus {
+    outline: 1px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.1);
+}
+
+/* Invert calendar icon on dark backgrounds */
+.score-0 .inline-date::-webkit-calendar-picker-indicator,
+.score-1 .inline-date::-webkit-calendar-picker-indicator,
+.score-2 .inline-date::-webkit-calendar-picker-indicator,
+.score-3 .inline-date::-webkit-calendar-picker-indicator,
+.score-5 .inline-date::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+.inline-text {
+    width: 100%;
+    padding: 1px 3px;
+    font-size: 0.7rem;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: transparent;
+    color: inherit;
+}
+
+.inline-text:hover {
+    border-color: #d1d5db;
+}
+
+.inline-text:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #fff;
+    color: #374151;
+}
+
 .empty-state {
     text-align: center;
     padding: 48px 20px;
