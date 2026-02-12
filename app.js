@@ -498,6 +498,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Event handlers ───────────────────────────────────────────────
 
+    // Event: Expand all groups
+    document.getElementById('expandAllBtn').addEventListener('click', () => {
+        groupByReg(getFilteredSorted()).forEach((recs, reg) => {
+            if (recs.length > 1) expandedGroups.add(reg);
+        });
+        renderTable();
+    });
+
+    // Event: Collapse all groups
+    document.getElementById('collapseAllBtn').addEventListener('click', () => {
+        expandedGroups.clear();
+        renderTable();
+    });
 
     // Event: Add new record
     addRowBtn.addEventListener('click', () => {
