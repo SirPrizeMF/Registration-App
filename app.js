@@ -24,12 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Expand/collapse state – tracks which regNummers are expanded
     const expandedGroups = new Set();
 
-    // Multi-year filter selections (empty Set = all years shown)
-    const regYearSelection = new Set();
-    const aanvangYearSelection = new Set();
-    let aanvangDateMode = '';   // 'before' | 'after' | ''
-    let aanvangDateValue = '';  // ISO date string
-
     // Flag to suppress sort when a column resize just happened
     let resizing = false;
 
@@ -133,23 +127,61 @@ document.addEventListener('DOMContentLoaded', () => {
     // Apply filters and sorting to records
     function getFilteredSorted() {
         let result = records.filter(record => {
-            // Multi-year filters
-            if (regYearSelection.size > 0) {
-                const ys = (record.regNummer || '').slice(3, 5);
-                if (!regYearSelection.has(ys ? '20' + ys : '')) return false;
-            }
-            if (aanvangYearSelection.size > 0) {
-                if (!aanvangYearSelection.has((record.datumAanvang || '').slice(0, 4))) return false;
-            }
-            // Before/After date filter
-            if (aanvangDateMode && aanvangDateValue) {
-                const d = record.datumAanvang || '';
-                if (aanvangDateMode === 'before' && d >= aanvangDateValue) return false;
-                if (aanvangDateMode === 'after'  && d <= aanvangDateValue) return false;
-            }
             for (const key in filters) {
                 const val = filters[key];
                 if (!val) continue;
+                if (key === 'regFilter') {
+                    const reg = record.regNummer || '';
+                    const rangeMatch = val.match(/^(20\d{2})-(20\d{2})$/);
+                    if (rangeMatch) {
+                        const y1 = parseInt(rangeMatch[1], 10);
+                        const y2 = parseInt(rangeMatch[2], 10);
+                        const ys = reg.slice(3, 5);
+                        const ry = ys ? 2000 + parseInt(ys, 10) : 0;
+                        if (ry < y1 || ry > y2) return false;
+                    } else if (/^20\d{2}$/.test(val)) {
+                        if (reg.slice(3, 5) !== val.slice(2)) return false;
+                    } else {
+                        if (!reg.toLowerCase().includes(val.toLowerCase())) return false;
+                    }
+                    continue;
+                }
+                if (key === 'aanvangFilter') {
+                    const lc = val.toLowerCase();
+                    let mode = '';
+                    let datePart = val.trim();
+                    if (lc.startsWith('na '))     { mode = 'na';    datePart = val.slice(3).trim(); }
+                    else if (lc.startsWith('voor '))  { mode = 'voor';  datePart = val.slice(5).trim(); }
+                    else if (lc.startsWith('vanaf ')) { mode = 'vanaf'; datePart = val.slice(6).trim(); }
+                    else if (lc.startsWith('t/m '))   { mode = 'tm';    datePart = val.slice(4).trim(); }
+                    datePart = datePart.replace(/\//g, '-');
+                    let startISO, endISO;
+                    const yearM    = datePart.match(/^(\d{4})$/);
+                    const monthM   = datePart.match(/^(\d{2})-(\d{4})$/);
+                    const fullM    = datePart.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+                    if (yearM) {
+                        startISO = `${datePart}-01-01`;
+                        endISO   = `${datePart}-12-31`;
+                    } else if (monthM) {
+                        const [, mm, yyyy] = monthM;
+                        const lastDay = new Date(parseInt(yyyy, 10), parseInt(mm, 10), 0).getDate();
+                        startISO = `${yyyy}-${mm}-01`;
+                        endISO   = `${yyyy}-${mm}-${String(lastDay).padStart(2, '0')}`;
+                    } else if (fullM) {
+                        const [, dd, mm, yyyy] = fullM;
+                        startISO = endISO = `${yyyy}-${mm}-${dd}`;
+                    } else {
+                        continue; // unrecognized format → don't filter
+                    }
+                    const d = record.datumAanvang || '';
+                    if (!d) return false;
+                    if      (mode === '')      { if (d < startISO || d > endISO) return false; }
+                    else if (mode === 'voor')  { if (d >= startISO) return false; }
+                    else if (mode === 'tm')    { if (d > endISO)    return false; }
+                    else if (mode === 'vanaf') { if (d < startISO)  return false; }
+                    else if (mode === 'na')    { if (d <= endISO)   return false; }
+                    continue;
+                }
                 const field = (record[key] || '').toLowerCase();
                 if (key === 'uitgevoerd' || key === 'afgemeld' || key === 'referentie' || key === 'archiefGevuld' || key === 'vervolg') {
                     // Exact match for dropdowns
@@ -233,64 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // Build/refresh a checkbox-based multi-year dropdown
-    function buildYearFilter(containerId, years, selection, onChange) {
-        const wrap = document.getElementById(containerId);
-        const btn = wrap.querySelector('.ymf-btn');
-        const dropdown = wrap.querySelector('.ymf-dropdown');
-        dropdown.innerHTML = '';
-
-        const allLabel = document.createElement('label');
-        allLabel.className = 'ymf-option';
-        const allCb = document.createElement('input');
-        allCb.type = 'checkbox';
-        allCb.checked = selection.size === 0;
-        allCb.addEventListener('change', () => {
-            selection.clear();
-            onChange();
-            buildYearFilter(containerId, years, selection, onChange);
-        });
-        allLabel.appendChild(allCb);
-        allLabel.appendChild(document.createTextNode('Alle jaren'));
-        dropdown.appendChild(allLabel);
-
-        years.forEach(y => {
-            const lbl = document.createElement('label');
-            lbl.className = 'ymf-option';
-            const cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.checked = selection.has(y);
-            cb.addEventListener('change', () => {
-                if (cb.checked) selection.add(y); else selection.delete(y);
-                onChange();
-                buildYearFilter(containerId, years, selection, onChange);
-            });
-            lbl.appendChild(cb);
-            lbl.appendChild(document.createTextNode(y));
-            dropdown.appendChild(lbl);
-        });
-
-        btn.textContent = selection.size === 0 ? 'Alle jaren' : [...selection].sort().join(', ');
-    }
-
-    // Populate Reg. Nr. year filter from current records
-    function populateYearFilter() {
-        const years = [...new Set(
-            records.map(r => {
-                const s = (r.regNummer || '').slice(3, 5);
-                return s ? '20' + s : null;
-            }).filter(Boolean)
-        )].sort();
-        buildYearFilter('regYearFilter', years, regYearSelection, () => renderTable());
-    }
-
-    // Populate Aanvang year filter from current records
-    function populateAanvangYearFilter() {
-        const years = [...new Set(
-            records.map(r => (r.datumAanvang || '').slice(0, 4)).filter(Boolean)
-        )].sort();
-        buildYearFilter('aanvangYearFilter', years, aanvangYearSelection, () => renderTable());
-    }
 
     // Render table – groups records by regNummer
     function renderTable() {
@@ -505,15 +479,10 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem(STORAGE_KEY);
             records = loadRecords();
             expandedGroups.clear();
-            regYearSelection.clear();
-            aanvangYearSelection.clear();
-            aanvangDateMode = '';
-            aanvangDateValue = '';
-            document.getElementById('aanvangDateMode').value = '';
-            document.getElementById('aanvangDateValue').value = '';
-            document.getElementById('aanvangDateValue').classList.add('hidden');
-            populateYearFilter();
-            populateAanvangYearFilter();
+            document.querySelectorAll('#filterRow .filter-input').forEach(i => {
+                i.value = '';
+                filters[i.dataset.key] = '';
+            });
             renderTable();
         }
     });
@@ -645,46 +614,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTable();
     });
 
-    // Event: Toggle year-filter dropdowns
-    document.querySelectorAll('.year-multiselect .ymf-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const dropdown = btn.nextElementSibling;
-            const wasHidden = dropdown.classList.contains('hidden');
-            // Close all dropdowns first
-            document.querySelectorAll('.ymf-dropdown').forEach(d => d.classList.add('hidden'));
-            if (wasHidden) dropdown.classList.remove('hidden');
-        });
-    });
-
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.ymf-dropdown').forEach(d => d.classList.add('hidden'));
-    });
-
-    // Prevent clicks inside a dropdown from closing it
-    document.querySelectorAll('.ymf-dropdown').forEach(d => {
-        d.addEventListener('click', e => e.stopPropagation());
-    });
-
-    // Event: Aanvang Before/After mode
-    document.getElementById('aanvangDateMode').addEventListener('change', (e) => {
-        aanvangDateMode = e.target.value;
-        const dateInput = document.getElementById('aanvangDateValue');
-        if (aanvangDateMode) {
-            dateInput.classList.remove('hidden');
-        } else {
-            dateInput.classList.add('hidden');
-            aanvangDateValue = '';
-            dateInput.value = '';
-        }
-        renderTable();
-    });
-
-    document.getElementById('aanvangDateValue').addEventListener('change', (e) => {
-        aanvangDateValue = e.target.value;
-        renderTable();
-    });
 
     // Event: Filter on input/select change
     document.querySelectorAll('#filterRow .filter-input').forEach(input => {
@@ -857,8 +786,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             saveRecords();
             expandedGroups.clear();
-            populateYearFilter();
-            populateAanvangYearFilter();
             renderTable();
 
             let msg = `Import klaar: ${added} toegevoegd, ${updated} bijgewerkt`;
@@ -875,8 +802,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initial render
-    populateYearFilter();
-    populateAanvangYearFilter();
     renderTable();
     initColumnResize();
 });

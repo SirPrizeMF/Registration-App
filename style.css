@@ -582,9 +582,7 @@ td.cell-opmerking {
 }
 
 .ymf-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
+    position: fixed;
     z-index: 200;
     background: #fff;
     border: 1px solid #d1d5db;
