@@ -201,8 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hasMultiple = recs.length > 1;
                 const isExpanded = expandedGroups.has(regNummer);
 
-                // For multi-record groups, compute worst status values
-                const summary = hasMultiple ? groupSummary(recs) : null;
+                // For multi-record groups, compute worst status values (only when collapsed)
+                const summary = (hasMultiple && !isExpanded) ? groupSummary(recs) : null;
                 const dispUitg     = summary ? summary.uitgevoerd    : first.uitgevoerd;
                 const dispAfg      = summary ? summary.afgemeld      : first.afgemeld;
                 const dispRef      = summary ? summary.referentie    : first.referentie;
