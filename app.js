@@ -135,6 +135,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if ((record.regNummer || '').slice(3, 5) !== yearSuffix) return false;
                     continue;
                 }
+                if (key === 'aanvangYear') {
+                    if ((record.datumAanvang || '').slice(0, 4) !== val) return false;
+                    continue;
+                }
                 const field = (record[key] || '').toLowerCase();
                 if (key === 'uitgevoerd' || key === 'afgemeld' || key === 'referentie' || key === 'archiefGevuld' || key === 'vervolg') {
                     // Exact match for dropdowns
@@ -227,6 +231,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 const s = (r.regNummer || '').slice(3, 5);
                 return s ? '20' + s : null;
             }).filter(Boolean)
+        )].sort();
+        sel.innerHTML = '<option value="">Alle jaren</option>';
+        years.forEach(y => {
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = y;
+            if (y === current) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    // Populate Aanvang year dropdown from current records
+    function populateAanvangYearFilter() {
+        const sel = document.getElementById('aanvangYearFilter');
+        const current = sel.value;
+        const years = [...new Set(
+            records.map(r => (r.datumAanvang || '').slice(0, 4)).filter(Boolean)
         )].sort();
         sel.innerHTML = '<option value="">Alle jaren</option>';
         years.forEach(y => {
@@ -452,6 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
             records = loadRecords();
             expandedGroups.clear();
             populateYearFilter();
+            populateAanvangYearFilter();
             renderTable();
         }
     });
@@ -586,6 +608,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event: Filter on input/select change
     document.getElementById('regYearFilter').addEventListener('change', (e) => {
         filters['regYear'] = e.target.value;
+        renderTable();
+    });
+
+    document.getElementById('aanvangYearFilter').addEventListener('change', (e) => {
+        filters['aanvangYear'] = e.target.value;
         renderTable();
     });
 
@@ -760,6 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveRecords();
             expandedGroups.clear();
             populateYearFilter();
+            populateAanvangYearFilter();
             renderTable();
 
             let msg = `Import klaar: ${added} toegevoegd, ${updated} bijgewerkt`;
@@ -777,6 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial render
     populateYearFilter();
+    populateAanvangYearFilter();
     renderTable();
     initColumnResize();
 });
