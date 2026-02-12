@@ -258,11 +258,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 tr.innerHTML = `
                     <td class="score-${sc}">${expandBtn}${escapeHtml(first.regNummer)}${countBadge}</td>
-                    <td class="score-${sc}">${escapeHtml(first.woNummer)}</td>
-                    <td class="score-${sc}">${escapeHtml(first.waar)}</td>
-                    <td class="score-${sc}">${isSummary ? escapeHtml(first.monteur) : buildSelect('monteur', first.monteur, first.id, MONTEUR_OPTIONS)}</td>
-                    <td class="score-${sc}">${isSummary ? formatDate(first.datumAanvang) : buildDateInput('datumAanvang', first.datumAanvang, first.id)}</td>
-                    <td class="score-${sc}">${isSummary ? formatDate(first.datumEind) : buildDateInput('datumEind', first.datumEind, first.id)}</td>
+                    <td class="score-${sc}">${isSummary ? '' : escapeHtml(first.woNummer)}</td>
+                    <td class="score-${sc}">${isSummary ? '' : escapeHtml(first.waar)}</td>
+                    <td class="score-${sc}">${isSummary ? '' : buildSelect('monteur', first.monteur, first.id, MONTEUR_OPTIONS)}</td>
+                    <td class="score-${sc}">${isSummary ? '' : buildDateInput('datumAanvang', first.datumAanvang, first.id)}</td>
+                    <td class="score-${sc}">${isSummary ? '' : buildDateInput('datumEind', first.datumEind, first.id)}</td>
                     <td class="cell-status ${statusColor('uitgevoerd', dispUitg)}">${isSummary ? escapeHtml(dispUitg) : buildSelect('uitgevoerd', first.uitgevoerd, first.id, UITGEVOERD_OPTIONS)}</td>
                     <td class="cell-status ${statusColor('afgemeld', dispAfg)}">${isSummary ? escapeHtml(dispAfg) : buildSelect('afgemeld', first.afgemeld, first.id, AFGEMELD_OPTIONS)}</td>
                     <td class="cell-status ${statusColor('referentie', dispRef)}">${isSummary ? escapeHtml(dispRef) : buildSelect('referentie', first.referentie, first.id, REFERENTIE_OPTIONS)}</td>
