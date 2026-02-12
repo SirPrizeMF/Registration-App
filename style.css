@@ -22,6 +22,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
     margin-bottom: 20px;
     padding: 16px 24px;
     background: #fff;
@@ -36,6 +38,7 @@ body {
 
 .header-buttons {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
