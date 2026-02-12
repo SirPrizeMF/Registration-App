@@ -479,19 +479,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Event handlers ───────────────────────────────────────────────
 
-    // Event: Reset data to original import
-    document.getElementById('resetBtn').addEventListener('click', () => {
-        if (confirm('Weet je zeker? Dit laadt de originele 154 records opnieuw in en verwijdert eventuele wijzigingen.')) {
-            localStorage.removeItem(STORAGE_KEY);
-            records = loadRecords();
-            expandedGroups.clear();
-            document.querySelectorAll('#filterRow .filter-input').forEach(i => {
-                i.value = '';
-                filters[i.dataset.key] = '';
-            });
-            renderTable();
-        }
-    });
 
     // Event: Add new record
     addRowBtn.addEventListener('click', () => {
