@@ -100,15 +100,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return '';
     }
 
-    // Load records from localStorage, seed with INITIAL_DATA on first run
+    // Load records from localStorage, seed with INITIAL_DATA on first run.
+    // Always strips records with datumAanvang before 2026 and persists the result.
     function loadRecords() {
-        const data = localStorage.getItem(STORAGE_KEY);
-        if (data) return JSON.parse(data);
-        if (typeof INITIAL_DATA !== 'undefined' && INITIAL_DATA.length > 0) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DATA));
-            return [...INITIAL_DATA];
+        let data;
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            data = JSON.parse(stored);
+        } else if (typeof INITIAL_DATA !== 'undefined' && INITIAL_DATA.length > 0) {
+            data = [...INITIAL_DATA];
+        } else {
+            return [];
         }
-        return [];
+        const filtered = data.filter(r => !r.datumAanvang || r.datumAanvang >= '2026-01-01');
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+        return filtered;
     }
 
     // Save records to localStorage
@@ -747,12 +753,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const warnings = [];
-            let added = 0, updated = 0, skipped = 0;
+            let added = 0, updated = 0, skipped = 0, tooOld = 0;
 
             rawRows.forEach(row => {
                 const imp = csvRowToRecord(row, warnings);
 
                 if (!imp.woNummer) { skipped++; return; }
+                if (imp.datumAanvang && imp.datumAanvang < '2026-01-01') { tooOld++; return; }
 
                 const existing = records.find(r => r.woNummer === imp.woNummer);
                 if (existing) {
@@ -789,7 +796,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTable();
 
             let msg = `Import klaar: ${added} toegevoegd, ${updated} bijgewerkt`;
-            if (skipped) msg += `, ${skipped} overgeslagen (geen WO-nr.)`;
+            if (skipped)  msg += `, ${skipped} overgeslagen (geen WO-nr.)`;
+            if (tooOld)   msg += `, ${tooOld} overgeslagen (aanvang vóór 2026)`;
             msg += '.';
             if (warnings.length > 0) {
                 msg += `\n\nLet op – de volgende records hebben een onbekende status en moeten handmatig worden ingesteld:\n\n`;
