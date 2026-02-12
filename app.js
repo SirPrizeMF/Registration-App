@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="cell-status ${statusColor('referentie', dispRef)}">${isSummary ? escapeHtml(dispRef) : buildSelect('referentie', first.referentie, first.id, REFERENTIE_OPTIONS)}</td>
                     <td class="cell-status ${statusColor('archiefGevuld', dispArchief)}">${isSummary ? escapeHtml(dispArchief) : buildSelect('archiefGevuld', first.archiefGevuld, first.id, ARCHIEF_OPTIONS)}</td>
                     <td class="cell-status ${statusColor('vervolg', dispVervolg)}">${isSummary ? escapeHtml(dispVervolg) : buildSelect('vervolg', first.vervolg, first.id, VERVOLG_OPTIONS)}</td>
-                    <td class="cell-opmerking" ${isSummary ? `title="${escapeHtml(first.opmerking)}"` : ''}>${isSummary ? escapeHtml(first.opmerking) : buildTextInput('opmerking', first.opmerking, first.id)}</td>
+                    <td class="cell-opmerking">${isSummary ? '' : buildTextInput('opmerking', first.opmerking, first.id)}</td>
                     <td class="cell-actions">
                         <button class="btn btn-danger" data-id="${first.id}">Verwijder</button>
                     </td>
