@@ -675,11 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return { regNummer, woNummer, waar, datumAanvang, afgemeld, referentie };
     }
 
-    // Event: Import CSV button
-    document.getElementById('importCsvBtn').addEventListener('click', () => {
-        document.getElementById('csvFileInput').click();
-    });
-
+    // Event: Import CSV (file input change – triggered by the <label> in the HTML)
     document.getElementById('csvFileInput').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
