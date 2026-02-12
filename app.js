@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const expandedGroups = new Set();
 
     // Multi-year filter selections (empty Set = all years shown)
-    const regYearSelection = new Set();
     const aanvangYearSelection = new Set();
     let aanvangDateMode = '';   // 'before' | 'after' | ''
     let aanvangDateValue = '';  // ISO date string
@@ -133,11 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Apply filters and sorting to records
     function getFilteredSorted() {
         let result = records.filter(record => {
-            // Multi-year filters
-            if (regYearSelection.size > 0) {
-                const ys = (record.regNummer || '').slice(3, 5);
-                if (!regYearSelection.has(ys ? '20' + ys : '')) return false;
-            }
+            // Multi-year filter (Aanvang)
             if (aanvangYearSelection.size > 0) {
                 if (!aanvangYearSelection.has((record.datumAanvang || '').slice(0, 4))) return false;
             }
@@ -150,6 +145,22 @@ document.addEventListener('DOMContentLoaded', () => {
             for (const key in filters) {
                 const val = filters[key];
                 if (!val) continue;
+                if (key === 'regFilter') {
+                    const reg = record.regNummer || '';
+                    const rangeMatch = val.match(/^(20\d{2})-(20\d{2})$/);
+                    if (rangeMatch) {
+                        const y1 = parseInt(rangeMatch[1], 10);
+                        const y2 = parseInt(rangeMatch[2], 10);
+                        const ys = reg.slice(3, 5);
+                        const ry = ys ? 2000 + parseInt(ys, 10) : 0;
+                        if (ry < y1 || ry > y2) return false;
+                    } else if (/^20\d{2}$/.test(val)) {
+                        if (reg.slice(3, 5) !== val.slice(2)) return false;
+                    } else {
+                        if (!reg.toLowerCase().includes(val.toLowerCase())) return false;
+                    }
+                    continue;
+                }
                 const field = (record[key] || '').toLowerCase();
                 if (key === 'uitgevoerd' || key === 'afgemeld' || key === 'referentie' || key === 'archiefGevuld' || key === 'vervolg') {
                     // Exact match for dropdowns
@@ -273,16 +284,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = selection.size === 0 ? 'Alle jaren' : [...selection].sort().join(', ');
     }
 
-    // Populate Reg. Nr. year filter from current records
-    function populateYearFilter() {
-        const years = [...new Set(
-            records.map(r => {
-                const s = (r.regNummer || '').slice(3, 5);
-                return s ? '20' + s : null;
-            }).filter(Boolean)
-        )].sort();
-        buildYearFilter('regYearFilter', years, regYearSelection, () => renderTable());
-    }
 
     // Populate Aanvang year filter from current records
     function populateAanvangYearFilter() {
@@ -505,14 +506,14 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem(STORAGE_KEY);
             records = loadRecords();
             expandedGroups.clear();
-            regYearSelection.clear();
             aanvangYearSelection.clear();
             aanvangDateMode = '';
             aanvangDateValue = '';
+            filters['regFilter'] = '';
+            document.getElementById('regFilter').value = '';
             document.getElementById('aanvangDateMode').value = '';
             document.getElementById('aanvangDateValue').value = '';
             document.getElementById('aanvangDateValue').classList.add('hidden');
-            populateYearFilter();
             populateAanvangYearFilter();
             renderTable();
         }
@@ -863,7 +864,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             saveRecords();
             expandedGroups.clear();
-            populateYearFilter();
             populateAanvangYearFilter();
             renderTable();
 
@@ -881,7 +881,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initial render
-    populateYearFilter();
     populateAanvangYearFilter();
     renderTable();
     initColumnResize();
