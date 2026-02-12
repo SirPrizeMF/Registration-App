@@ -12,6 +12,8 @@
             <h1>Registratie App</h1>
             <div class="header-buttons">
                 <button id="resetBtn" class="btn btn-secondary">Reset Data</button>
+                <label for="csvFileInput" class="btn btn-secondary" style="cursor:pointer">Import CSV</label>
+                <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none">
                 <button id="addRowBtn" class="btn btn-primary">+ Nieuw Record</button>
             </div>
         </header>
@@ -61,6 +63,7 @@
                             <select class="filter-select" data-key="referentie">
                                 <option value="">Alle</option>
                                 <option value="Nee">Nee</option>
+                                <option value="Ingevuld, nakijken">Ingevuld, nakijken</option>
                                 <option value="Ja">Ja</option>
                                 <option value="Onnodig">Onnodig</option>
                             </select>
