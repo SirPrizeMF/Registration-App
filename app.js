@@ -675,78 +675,72 @@ document.addEventListener('DOMContentLoaded', () => {
         return { regNummer, woNummer, waar, datumAanvang, afgemeld, referentie };
     }
 
-    // ── CSV paste modal ──────────────────────────────────────────────
-    const csvModal        = document.getElementById('csvModal');
-    const csvPasteArea    = document.getElementById('csvPasteArea');
-
-    function openCsvModal()  { csvModal.classList.remove('hidden'); csvPasteArea.value = ''; csvPasteArea.focus(); }
-    function closeCsvModal() { csvModal.classList.add('hidden'); }
-
-    document.getElementById('importCsvBtn').addEventListener('click', openCsvModal);
-    document.getElementById('csvCancelBtn').addEventListener('click', closeCsvModal);
-    document.getElementById('csvModalOverlay').addEventListener('click', closeCsvModal);
-
-    document.getElementById('csvImportBtn').addEventListener('click', () => {
-        const text = csvPasteArea.value.trim();
-        if (!text) return;
-
-        const rawRows = parseCsvRaw(text);
-        if (rawRows.length === 0) {
-            alert('Geen geldige records gevonden. Controleer of de koptekstrij aanwezig is.');
-            return;
-        }
-
-        const warnings = [];
-        let added = 0, updated = 0, skipped = 0;
-
-        rawRows.forEach(row => {
-            const imp = csvRowToRecord(row, warnings);
-
-            if (!imp.woNummer) { skipped++; return; }
-
-            const existing = records.find(r => r.woNummer === imp.woNummer);
-            if (existing) {
-                if (imp.regNummer)    existing.regNummer    = imp.regNummer;
-                if (imp.waar)         existing.waar         = imp.waar;
-                if (imp.datumAanvang) existing.datumAanvang = imp.datumAanvang;
-                existing.afgemeld = imp.afgemeld;
-                if (existing.referentie === 'Nee' && imp.referentie !== 'Nee') {
-                    existing.referentie = imp.referentie;
-                }
-                updated++;
-            } else {
-                records.push({
-                    id:            generateId(),
-                    regNummer:     imp.regNummer,
-                    woNummer:      imp.woNummer,
-                    waar:          imp.waar,
-                    monteur:       '',
-                    datumAanvang:  imp.datumAanvang,
-                    datumEind:     '',
-                    uitgevoerd:    'Nee',
-                    afgemeld:      imp.afgemeld,
-                    referentie:    imp.referentie,
-                    archiefGevuld: 'Ja',
-                    vervolg:       'Nee',
-                    opmerking:     '',
-                });
-                added++;
+    // ── CSV file import ──────────────────────────────────────────────
+    document.getElementById('csvFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const rawRows = parseCsvRaw(evt.target.result);
+            if (rawRows.length === 0) {
+                alert('Geen geldige records gevonden. Controleer of de koptekstrij aanwezig is.');
+                e.target.value = '';
+                return;
             }
-        });
 
-        saveRecords();
-        expandedGroups.clear();
-        renderTable();
-        closeCsvModal();
+            const warnings = [];
+            let added = 0, updated = 0, skipped = 0;
 
-        let msg = `Import klaar: ${added} toegevoegd, ${updated} bijgewerkt`;
-        if (skipped) msg += `, ${skipped} overgeslagen (geen WO-nr.)`;
-        msg += '.';
-        if (warnings.length > 0) {
-            msg += `\n\nLet op – de volgende records hebben een onbekende status en moeten handmatig worden ingesteld:\n\n`;
-            msg += warnings.join('\n');
-        }
-        alert(msg);
+            rawRows.forEach(row => {
+                const imp = csvRowToRecord(row, warnings);
+
+                if (!imp.woNummer) { skipped++; return; }
+
+                const existing = records.find(r => r.woNummer === imp.woNummer);
+                if (existing) {
+                    if (imp.regNummer)    existing.regNummer    = imp.regNummer;
+                    if (imp.waar)         existing.waar         = imp.waar;
+                    if (imp.datumAanvang) existing.datumAanvang = imp.datumAanvang;
+                    existing.afgemeld = imp.afgemeld;
+                    if (existing.referentie === 'Nee' && imp.referentie !== 'Nee') {
+                        existing.referentie = imp.referentie;
+                    }
+                    updated++;
+                } else {
+                    records.push({
+                        id:            generateId(),
+                        regNummer:     imp.regNummer,
+                        woNummer:      imp.woNummer,
+                        waar:          imp.waar,
+                        monteur:       '',
+                        datumAanvang:  imp.datumAanvang,
+                        datumEind:     '',
+                        uitgevoerd:    'Nee',
+                        afgemeld:      imp.afgemeld,
+                        referentie:    imp.referentie,
+                        archiefGevuld: 'Ja',
+                        vervolg:       'Nee',
+                        opmerking:     '',
+                    });
+                    added++;
+                }
+            });
+
+            saveRecords();
+            expandedGroups.clear();
+            renderTable();
+
+            let msg = `Import klaar: ${added} toegevoegd, ${updated} bijgewerkt`;
+            if (skipped) msg += `, ${skipped} overgeslagen (geen WO-nr.)`;
+            msg += '.';
+            if (warnings.length > 0) {
+                msg += `\n\nLet op – de volgende records hebben een onbekende status en moeten handmatig worden ingesteld:\n\n`;
+                msg += warnings.join('\n');
+            }
+            alert(msg);
+        };
+        reader.readAsText(file);
+        e.target.value = '';
     });
 
     // Initial render
