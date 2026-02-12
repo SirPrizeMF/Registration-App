@@ -24,6 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Expand/collapse state – tracks which regNummers are expanded
     const expandedGroups = new Set();
 
+    // Multi-year filter selections (empty Set = all years shown)
+    const regYearSelection = new Set();
+    const aanvangYearSelection = new Set();
+    let aanvangDateMode = '';   // 'before' | 'after' | ''
+    let aanvangDateValue = '';  // ISO date string
+
     // Flag to suppress sort when a column resize just happened
     let resizing = false;
 
@@ -127,18 +133,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Apply filters and sorting to records
     function getFilteredSorted() {
         let result = records.filter(record => {
+            // Multi-year filters
+            if (regYearSelection.size > 0) {
+                const ys = (record.regNummer || '').slice(3, 5);
+                if (!regYearSelection.has(ys ? '20' + ys : '')) return false;
+            }
+            if (aanvangYearSelection.size > 0) {
+                if (!aanvangYearSelection.has((record.datumAanvang || '').slice(0, 4))) return false;
+            }
+            // Before/After date filter
+            if (aanvangDateMode && aanvangDateValue) {
+                const d = record.datumAanvang || '';
+                if (aanvangDateMode === 'before' && d >= aanvangDateValue) return false;
+                if (aanvangDateMode === 'after'  && d <= aanvangDateValue) return false;
+            }
             for (const key in filters) {
                 const val = filters[key];
                 if (!val) continue;
-                if (key === 'regYear') {
-                    const yearSuffix = val.slice(2); // '2025' → '25'
-                    if ((record.regNummer || '').slice(3, 5) !== yearSuffix) return false;
-                    continue;
-                }
-                if (key === 'aanvangYear') {
-                    if ((record.datumAanvang || '').slice(0, 4) !== val) return false;
-                    continue;
-                }
                 const field = (record[key] || '').toLowerCase();
                 if (key === 'uitgevoerd' || key === 'afgemeld' || key === 'referentie' || key === 'archiefGevuld' || key === 'vervolg') {
                     // Exact match for dropdowns
@@ -222,41 +233,63 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // Populate year dropdown from current records
+    // Build/refresh a checkbox-based multi-year dropdown
+    function buildYearFilter(containerId, years, selection, onChange) {
+        const wrap = document.getElementById(containerId);
+        const btn = wrap.querySelector('.ymf-btn');
+        const dropdown = wrap.querySelector('.ymf-dropdown');
+        dropdown.innerHTML = '';
+
+        const allLabel = document.createElement('label');
+        allLabel.className = 'ymf-option';
+        const allCb = document.createElement('input');
+        allCb.type = 'checkbox';
+        allCb.checked = selection.size === 0;
+        allCb.addEventListener('change', () => {
+            selection.clear();
+            onChange();
+            buildYearFilter(containerId, years, selection, onChange);
+        });
+        allLabel.appendChild(allCb);
+        allLabel.appendChild(document.createTextNode('Alle jaren'));
+        dropdown.appendChild(allLabel);
+
+        years.forEach(y => {
+            const lbl = document.createElement('label');
+            lbl.className = 'ymf-option';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.checked = selection.has(y);
+            cb.addEventListener('change', () => {
+                if (cb.checked) selection.add(y); else selection.delete(y);
+                onChange();
+                buildYearFilter(containerId, years, selection, onChange);
+            });
+            lbl.appendChild(cb);
+            lbl.appendChild(document.createTextNode(y));
+            dropdown.appendChild(lbl);
+        });
+
+        btn.textContent = selection.size === 0 ? 'Alle jaren' : [...selection].sort().join(', ');
+    }
+
+    // Populate Reg. Nr. year filter from current records
     function populateYearFilter() {
-        const sel = document.getElementById('regYearFilter');
-        const current = sel.value;
         const years = [...new Set(
             records.map(r => {
                 const s = (r.regNummer || '').slice(3, 5);
                 return s ? '20' + s : null;
             }).filter(Boolean)
         )].sort();
-        sel.innerHTML = '<option value="">Alle jaren</option>';
-        years.forEach(y => {
-            const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
-            if (y === current) opt.selected = true;
-            sel.appendChild(opt);
-        });
+        buildYearFilter('regYearFilter', years, regYearSelection, () => renderTable());
     }
 
-    // Populate Aanvang year dropdown from current records
+    // Populate Aanvang year filter from current records
     function populateAanvangYearFilter() {
-        const sel = document.getElementById('aanvangYearFilter');
-        const current = sel.value;
         const years = [...new Set(
             records.map(r => (r.datumAanvang || '').slice(0, 4)).filter(Boolean)
         )].sort();
-        sel.innerHTML = '<option value="">Alle jaren</option>';
-        years.forEach(y => {
-            const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
-            if (y === current) opt.selected = true;
-            sel.appendChild(opt);
-        });
+        buildYearFilter('aanvangYearFilter', years, aanvangYearSelection, () => renderTable());
     }
 
     // Render table – groups records by regNummer
@@ -472,6 +505,13 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem(STORAGE_KEY);
             records = loadRecords();
             expandedGroups.clear();
+            regYearSelection.clear();
+            aanvangYearSelection.clear();
+            aanvangDateMode = '';
+            aanvangDateValue = '';
+            document.getElementById('aanvangDateMode').value = '';
+            document.getElementById('aanvangDateValue').value = '';
+            document.getElementById('aanvangDateValue').classList.add('hidden');
             populateYearFilter();
             populateAanvangYearFilter();
             renderTable();
@@ -605,17 +645,48 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTable();
     });
 
+    // Event: Toggle year-filter dropdowns
+    document.querySelectorAll('.year-multiselect .ymf-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dropdown = btn.nextElementSibling;
+            const wasHidden = dropdown.classList.contains('hidden');
+            // Close all dropdowns first
+            document.querySelectorAll('.ymf-dropdown').forEach(d => d.classList.add('hidden'));
+            if (wasHidden) dropdown.classList.remove('hidden');
+        });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.ymf-dropdown').forEach(d => d.classList.add('hidden'));
+    });
+
+    // Prevent clicks inside a dropdown from closing it
+    document.querySelectorAll('.ymf-dropdown').forEach(d => {
+        d.addEventListener('click', e => e.stopPropagation());
+    });
+
+    // Event: Aanvang Before/After mode
+    document.getElementById('aanvangDateMode').addEventListener('change', (e) => {
+        aanvangDateMode = e.target.value;
+        const dateInput = document.getElementById('aanvangDateValue');
+        if (aanvangDateMode) {
+            dateInput.classList.remove('hidden');
+        } else {
+            dateInput.classList.add('hidden');
+            aanvangDateValue = '';
+            dateInput.value = '';
+        }
+        renderTable();
+    });
+
+    document.getElementById('aanvangDateValue').addEventListener('change', (e) => {
+        aanvangDateValue = e.target.value;
+        renderTable();
+    });
+
     // Event: Filter on input/select change
-    document.getElementById('regYearFilter').addEventListener('change', (e) => {
-        filters['regYear'] = e.target.value;
-        renderTable();
-    });
-
-    document.getElementById('aanvangYearFilter').addEventListener('change', (e) => {
-        filters['aanvangYear'] = e.target.value;
-        renderTable();
-    });
-
     document.querySelectorAll('#filterRow .filter-input').forEach(input => {
         input.addEventListener('input', () => {
             filters[input.dataset.key] = input.value;

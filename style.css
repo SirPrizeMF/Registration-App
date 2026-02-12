@@ -560,6 +560,89 @@ td.cell-opmerking {
     border-top: 1px solid #e5e7eb;
 }
 
+/* Multi-year filter widget */
+.year-multiselect {
+    position: relative;
+}
+
+.ymf-btn {
+    width: 100%;
+    padding: 2px 3px;
+    font-size: 0.6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 3px;
+    background: #fff;
+    color: #374151;
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+
+.ymf-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 200;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 3px;
+    min-width: 100px;
+    max-height: 180px;
+    overflow-y: auto;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.ymf-dropdown.hidden {
+    display: none;
+}
+
+.ymf-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    font-size: 0.6rem;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    color: #374151;
+}
+
+.ymf-option:hover {
+    background: #f3f4f6;
+}
+
+.ymf-option input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+/* Before/After date filter (Aanvang column) */
+.date-range-filter {
+    margin-top: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.date-mode-select,
+.date-range-input {
+    width: 100%;
+    padding: 2px 3px;
+    font-size: 0.6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 3px;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.date-range-input.hidden {
+    display: none;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
     .app-container {
