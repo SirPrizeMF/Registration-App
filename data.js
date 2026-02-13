@@ -235,7 +235,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Onbekend",
     "score": 2,
     "opmerking": "Komt half feb zelf in de lucht voor afspraak"
   },
@@ -379,7 +379,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Onnodig",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 4,
     "opmerking": "Blijft open ivm uren"
   },
@@ -411,7 +411,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Gepland",
     "score": 5,
     "opmerking": "WO opvolving: 4602600063"
   },
@@ -427,7 +427,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -459,7 +459,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -571,7 +571,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "AC plaatsen die kan verwarmen/koelen"
   },
@@ -651,7 +651,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -667,7 +667,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "AC plaatsen die kan verwarmen/koelen"
   },
@@ -683,7 +683,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Onnodig",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Nee",
     "score": 4,
     "opmerking": ""
   },
@@ -731,7 +731,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -747,7 +747,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Gepland",
     "score": 5,
     "opmerking": "Reg opvolging: 4602650021"
   },
@@ -795,7 +795,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Gepland",
     "score": 5,
     "opmerking": "Display vervangen"
   },
@@ -827,7 +827,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Gepland",
     "score": 5,
     "opmerking": "Reg opvolging: 4602650026"
   },
@@ -875,7 +875,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Onbekend",
     "score": 2,
     "opmerking": ""
   },
@@ -907,7 +907,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Onnodig",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -955,7 +955,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1019,7 +1019,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1035,7 +1035,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1067,7 +1067,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1099,7 +1099,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Onbekend",
     "score": 2,
     "opmerking": ""
   },
@@ -1115,7 +1115,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1131,7 +1131,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1163,7 +1163,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "Offerte verstuurd, denkt er nog over na"
   },
@@ -1179,7 +1179,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "In voorjaar filter reinigen, systeem flushen, koudemiddel afpompen/wegen en correct vullen"
   },
@@ -1195,7 +1195,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Gepland",
     "score": 5,
     "opmerking": "WO opvolging: 4602600064"
   },
@@ -1211,7 +1211,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "Zeewaterpomp moet nog worden aangesloten, beste te doen wanneer afpersen/vacuümeren/vullen gereed is"
   },
@@ -1243,7 +1243,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "Plan van aanpak maken voor refit/hergebruik R404A"
   },
@@ -1259,7 +1259,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Nee",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Onbekend",
     "score": 1,
     "opmerking": "Referentie na proforma"
   },
@@ -1275,7 +1275,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Nee",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Onbekend",
     "score": 1,
     "opmerking": "Referentie na proforma"
   },
@@ -1339,7 +1339,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Onbekend",
     "score": 2,
     "opmerking": ""
   },
@@ -1355,7 +1355,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Nee",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 4,
     "opmerking": "Referentie na proforma"
   },
@@ -1403,7 +1403,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Nee",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Gepland",
     "score": 4,
     "opmerking": "WO opvolging: 4602600112. Referentie na proforma."
   },
@@ -1419,7 +1419,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Nee",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Gepland",
     "score": 4,
     "opmerking": "WO opvolging: 4602600071 / 4602600074. Referentie na proforma."
   },
@@ -1483,7 +1483,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "Voelers in-/uittrede aanbieden, foto typeplaat in bijlage"
   },
@@ -1499,7 +1499,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "Motor/blad + printplaat vernieuwen, type in bijlage"
   },
@@ -1515,7 +1515,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1579,7 +1579,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1611,7 +1611,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1659,7 +1659,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Nee",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Onbekend",
     "score": 1,
     "opmerking": "Gedoe over PO, klant of Damen?"
   },
@@ -1675,7 +1675,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1691,7 +1691,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1723,7 +1723,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Onbekend",
     "score": 2,
     "opmerking": ""
   },
@@ -1755,7 +1755,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Nee",
     "archiefGevuld": "Onvolledig",
-    "vervolg": "Ja",
+    "vervolg": "Gepland",
     "score": 3,
     "opmerking": "Ref gevraagd Jeanette 2-2. Vervolg WO 4602600114"
   },
@@ -1771,7 +1771,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Nee",
     "archiefGevuld": "Onvolledig",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 3,
     "opmerking": "Ref gevraagd Jeanette 2-2"
   },
@@ -1787,7 +1787,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1835,7 +1835,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Gepland",
     "score": 5,
     "opmerking": "Vervolg WO 4602600132/133"
   },
@@ -1867,7 +1867,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Gepland",
     "score": 5,
     "opmerking": "Vervolg WO 4602600104/115"
   },
@@ -1883,7 +1883,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -1899,7 +1899,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "Materiaallijst gemaakt voor retrofit, verdere opname wachten tot niet in gebruik"
   },
@@ -1915,7 +1915,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "Laag niveau systeem 1"
   },
@@ -1931,7 +1931,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Onbekend",
     "score": 2,
     "opmerking": ""
   },
@@ -1995,7 +1995,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -2011,7 +2011,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Nee",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Onbekend",
     "score": 1,
     "opmerking": "Referentie na proforma"
   },
@@ -2027,7 +2027,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "Offete voor compressor en verdamper"
   },
@@ -2043,7 +2043,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Nee",
     "archiefGevuld": "Onvolledig",
-    "vervolg": "Nee",
+    "vervolg": "Onbekend",
     "score": 0,
     "opmerking": "Ref gevraagd Jeanette 2-2"
   },
@@ -2059,7 +2059,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -2091,7 +2091,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -2107,7 +2107,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Nee",
+    "vervolg": "Onbekend",
     "score": 2,
     "opmerking": ""
   },
@@ -2123,7 +2123,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -2139,7 +2139,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "Uitwerken toekomstige werkzaamheden"
   },
@@ -2187,7 +2187,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 2,
     "opmerking": ""
   },
@@ -2203,7 +2203,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Ja",
     "score": 4,
     "opmerking": "Slangen toevoerlucht vervangen"
   },
@@ -2219,7 +2219,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -2235,7 +2235,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Gepland",
     "score": 5,
     "opmerking": ""
   },
@@ -2251,7 +2251,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Gepland",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -2267,7 +2267,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Nee",
     "archiefGevuld": "Onvolledig",
-    "vervolg": "Onbekend",
+    "vervolg": "Ja",
     "score": 0,
     "opmerking": "Referentie volgt, Martijn"
   },
@@ -2283,7 +2283,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Nee",
     "archiefGevuld": "Onvolledig",
-    "vervolg": "Ja",
+    "vervolg": "Onbekend",
     "score": 0,
     "opmerking": "Referentie volgt, Martijn"
   },
@@ -2299,7 +2299,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Nee",
     "score": 5,
     "opmerking": ""
   },
@@ -2379,7 +2379,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Onbekend",
     "score": 2,
     "opmerking": "Wat is dit?"
   },
@@ -2395,7 +2395,7 @@ const INITIAL_DATA = [
     "afgemeld": "Ja",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Ja",
+    "vervolg": "Gepland",
     "score": 5,
     "opmerking": ""
   },
@@ -2427,7 +2427,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Ja",
     "archiefGevuld": "Ja",
-    "vervolg": "Onbekend",
+    "vervolg": "Ja",
     "score": 2,
     "opmerking": ""
   },
@@ -2459,7 +2459,7 @@ const INITIAL_DATA = [
     "afgemeld": "Nee",
     "referentie": "Nee",
     "archiefGevuld": "Onvolledig",
-    "vervolg": "Ja",
+    "vervolg": "Nee",
     "score": 0,
     "opmerking": "Referentie na proforma"
   }
