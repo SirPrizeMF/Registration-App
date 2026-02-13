@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const STORAGE_KEY = 'registrationAppData';
-    const WAAR_MAP_KEY = 'registrationAppWaarMap';
+    const WAAR_MAP_KEY    = 'registrationAppWaarMap';
+    const WAAR_REVIEW_KEY = 'registrationAppWaarReview';
     const REG_PREFIX = '460265';
     const WO_PREFIX = '460260';
 
@@ -15,7 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalOverlay = modal.querySelector('.modal-overlay');
 
     let records = loadRecords();
-    let waarMappings = loadWaarMappings();
+    let waarMappings    = loadWaarMappings();
+    let waarNeedsReview = loadWaarNeedsReview();
     let editingId = null;
 
     // Sort & filter state
@@ -147,6 +149,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function saveWaarMappings() {
         localStorage.setItem(WAAR_MAP_KEY, JSON.stringify(waarMappings));
+    }
+    function loadWaarNeedsReview() {
+        try { return new Set(JSON.parse(localStorage.getItem(WAAR_REVIEW_KEY) || '[]')); }
+        catch (e) { return new Set(); }
+    }
+    function saveWaarNeedsReview() {
+        localStorage.setItem(WAAR_REVIEW_KEY, JSON.stringify([...waarNeedsReview]));
     }
 
     // Format date for display (YYYY-MM-DD → DD-MM-YYYY)
@@ -468,10 +477,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Get form data
     function getFormData() {
+        const waarRaw  = document.getElementById('waar').value.trim();
+        const waar     = processWaar(waarRaw);
+        // Flag for manual review if the entered value didn't start with NRC
+        // and is not already a known correction.
+        if (waarRaw && !/^NRC/i.test(waarRaw) &&
+                !Object.prototype.hasOwnProperty.call(waarMappings, waarRaw) && waar) {
+            waarNeedsReview.add(waar);
+            saveWaarNeedsReview();
+        }
         return {
             regNummer: REG_PREFIX + document.getElementById('regNummer').value.trim(),
             woNummer: WO_PREFIX + document.getElementById('woNummer').value.trim(),
-            waar: document.getElementById('waar').value.trim(),
+            waar,
             monteur: document.getElementById('monteur').value.trim(),
             datumAanvang: document.getElementById('datumAanvang').value,
             datumEind: document.getElementById('datumEind').value,
@@ -752,6 +770,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Persist the mapping so future imports auto-correct the same value
         waarMappings[original] = newValue;
         saveWaarMappings();
+        // Mark as no longer needing review
+        waarNeedsReview.delete(original);
+        saveWaarNeedsReview();
         saveRecords();
         const wrapper = document.querySelector('.table-wrapper');
         const scrollTop = wrapper.scrollTop;
@@ -843,31 +864,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Transform a raw "Dossier" value from CSV into the stored "waar" value:
-    // 1. Strip "NRC" + any following dashes (e.g. "NRC-Foo" → "Foo", "NRCFoo" → "Foo")
+    // 1. If it starts with "NRC", strip "NRC" + any following spaces/dashes
+    //    e.g. "NRC - Foo" → "Foo",  "NRC-Foo" → "Foo",  "NRCFoo" → "Foo"
     // 2. Apply any known user correction mapping (if the address was previously corrected)
+    // Non-NRC values are returned as-is; callers are responsible for flagging them.
     function processWaar(raw) {
         if (!raw) return raw;
         let v = raw.trim();
-        // Strip leading "NRC" + optional dashes
-        if (/^NRC-*/i.test(v)) v = v.replace(/^NRC-*/i, '');
+        // Strip leading "NRC" + any combination of spaces and dashes
+        if (/^NRC/i.test(v)) v = v.replace(/^NRC[-\s]*/i, '');
         // Apply persisted correction mapping
         if (Object.prototype.hasOwnProperty.call(waarMappings, v)) v = waarMappings[v];
         return v;
     }
 
-    // Returns true when a "waar" value needs manual correction (starts with 4 digits).
+    // Returns true when a "waar" value needs manual correction:
+    // – explicitly marked as non-NRC during import/entry, OR
+    // – (legacy) still starts with 4 digits (postal-code prefix).
     function waarNeedsFlag(value) {
-        return /^\d{4}/.test(value || '');
+        return waarNeedsReview.has(value || '') || /^\d{4}/.test(value || '');
     }
 
     // Build the table cell content for a "waar" value.
-    // Flagged values (start with 4 digits) get a red editable input; others plain text.
+    // Flagged values get a red editable input; others plain text.
     function buildWaarCell(value, id) {
         if (waarNeedsFlag(value)) {
             const esc = escapeHtml(value || '');
             return `<input type="text" class="inline-text waar-input waar-flagged" ` +
                    `data-id="${id}" data-field="waar" data-original="${esc}" ` +
-                   `value="${esc}" title="Aanpassen vereist: begint met cijfers">`;
+                   `value="${esc}" title="Aanpassen vereist: niet afkomstig van NRC">`;
         }
         return escapeHtml(value);
     }
@@ -937,7 +962,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function csvRowToRecord(row, warnings) {
         const regNummer  = stripNrc(col(row, 'Registratienr.', 'Registratienr', 'Registratienummer'));
         const woNummer   = col(row, 'Werkordernummer', 'WO-nr.', 'WO-nummer');
-        const waar       = processWaar(col(row, 'Dossier'));
+        const rawDossier = col(row, 'Dossier');
+        const waar       = processWaar(rawDossier);
+        // Flag for manual review when the raw value did not start with NRC
+        // and is not already a known (previously corrected) mapping.
+        const waarReview = !!rawDossier.trim()
+            && !/^NRC/i.test(rawDossier.trim())
+            && !Object.prototype.hasOwnProperty.call(waarMappings, rawDossier.trim());
         const datumAanvang = normaliseDate(col(row, 'Uitvoerings datum', 'Uitvoeringsdatum'));
 
         // Afg. from Status omschr.
@@ -957,7 +988,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const refRaw = col(row, 'Referentie');
         const referentie = refRaw ? 'Ingevuld' : 'Nee';
 
-        return { regNummer, woNummer, waar, datumAanvang, afgemeld, referentie };
+        return { regNummer, woNummer, waar, waarReview, datumAanvang, afgemeld, referentie };
     }
 
     // ── CSV file import ──────────────────────────────────────────────
@@ -981,6 +1012,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!imp.woNummer) { skipped++; return; }
                 if (imp.datumAanvang && imp.datumAanvang < '2026-01-01') { tooOld++; return; }
+
+                // Track non-NRC waar values for manual-review flagging
+                if (imp.waarReview && imp.waar) waarNeedsReview.add(imp.waar);
 
                 const existing = records.find(r => r.woNummer === imp.woNummer);
                 if (existing) {
@@ -1020,6 +1054,7 @@ document.addEventListener('DOMContentLoaded', () => {
             records = records.filter(r => regWithDate.has(r.regNummer));
 
             saveRecords();
+            saveWaarNeedsReview();
             expandedGroups.clear();
             renderTable();
 
