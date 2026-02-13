@@ -356,6 +356,49 @@ td.cell-opmerking {
     background: #fff;
 }
 
+/* Date cell: text input + calendar button + hidden native date input */
+.date-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 1px;
+}
+
+.date-wrapper .inline-date {
+    flex: 1;
+    min-width: 0;
+}
+
+.date-picker-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0 1px;
+    font-size: 0.6rem;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.5;
+    line-height: 1;
+}
+
+.date-picker-btn:hover {
+    opacity: 1;
+}
+
+.hidden-date-input {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 18px;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    border: none;
+    padding: 0;
+    background: transparent;
+}
+
 .inline-date {
     width: 100%;
     padding: 1px 2px;
@@ -364,7 +407,7 @@ td.cell-opmerking {
     border-radius: 3px;
     background: transparent;
     color: inherit;
-    cursor: pointer;
+    cursor: text;
 }
 
 .inline-date:hover {
@@ -374,15 +417,6 @@ td.cell-opmerking {
 .inline-date:focus {
     outline: 1px solid rgba(255,255,255,0.4);
     background: rgba(255,255,255,0.1);
-}
-
-/* Invert calendar icon on dark backgrounds */
-.score-0 .inline-date::-webkit-calendar-picker-indicator,
-.score-1 .inline-date::-webkit-calendar-picker-indicator,
-.score-2 .inline-date::-webkit-calendar-picker-indicator,
-.score-3 .inline-date::-webkit-calendar-picker-indicator,
-.score-5 .inline-date::-webkit-calendar-picker-indicator {
-    filter: invert(1);
 }
 
 .inline-text {
