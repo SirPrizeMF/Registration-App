@@ -72,6 +72,17 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Cascade rules triggered by an Afg. change:
+    //   Afg. = Ja  → Uitg. = Ja
+    //   Afg. = Nee → Vervolg = Onbekend
+    function applyAfgemeldRules(record) {
+        if (record.afgemeld === 'Ja') {
+            record.uitgevoerd = 'Ja';
+        } else if (record.afgemeld === 'Nee') {
+            record.vervolg = 'Onbekend';
+        }
+    }
+
     // Calculate score based on field values
     function calculateScore(record) {
         let score = 0;
@@ -548,6 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
     recordForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const data = getFormData();
+        applyAfgemeldRules(data);
 
         if (editingId) {
             const index = records.findIndex(r => r.id === editingId);
@@ -625,6 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
             records.forEach(r => { if (r.regNummer === record.regNummer) r[field] = el.value; });
         } else {
             record[field] = el.value;
+            if (field === 'afgemeld') applyAfgemeldRules(record);
         }
         saveRecords();
         renderTable();
@@ -837,12 +850,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (imp.waar)         existing.waar         = imp.waar;
                     if (imp.datumAanvang) existing.datumAanvang = imp.datumAanvang;
                     existing.afgemeld = imp.afgemeld;
+                    applyAfgemeldRules(existing);
                     if (existing.referentie === 'Nee' && imp.referentie !== 'Nee') {
                         existing.referentie = imp.referentie;
                     }
                     updated++;
                 } else {
-                    records.push({
+                    const newRec = {
                         id:            generateId(),
                         regNummer:     imp.regNummer,
                         woNummer:      imp.woNummer,
@@ -856,7 +870,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         archiefGevuld: 'Ja',
                         vervolg:       'Nee',
                         opmerking:     '',
-                    });
+                    };
+                    applyAfgemeldRules(newRec);
+                    records.push(newRec);
                     added++;
                 }
             });
