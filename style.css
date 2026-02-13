@@ -442,6 +442,27 @@ td.cell-opmerking {
     color: #374151;
 }
 
+/* Waar field: flagged (starts with 4 digits, needs manual correction) */
+.waar-input.waar-flagged {
+    background-color: #fee2e2;
+    border-color: #ef4444 !important;
+    color: #b91c1c;
+}
+
+.waar-input.waar-flagged:focus {
+    background-color: #fff;
+    border-color: #ef4444 !important;
+    color: #374151;
+}
+
+/* Read-only flag indicator for collapsed group rows */
+.waar-flagged-text {
+    color: #b91c1c;
+    background-color: #fee2e2;
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
 .inline-textarea {
     width: 100%;
     padding: 1px 3px;
