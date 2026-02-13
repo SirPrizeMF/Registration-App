@@ -1102,12 +1102,14 @@ document.addEventListener('DOMContentLoaded', () => {
         'gnf':         'Ja',   // Gereed niet gefactureerd
         // 'verw' is intentionally omitted — those rows are skipped on import
         'annul':       'Ja',   // Geannuleerd → also Uitg. = Vervallen
-        'vervallen':   'Ja',   // Vervallen    → also Uitg. = Vervallen
+        'verv':        'Ja',   // Vervallen (short code) → also Uitg. = Vervallen
+        'vervallen':   'Ja',   // Vervallen (long form, kept for safety) → also Uitg. = Vervallen
+        'waopo':       'Ja',   // Wacht op opdracht → also Uitg. = Vervallen
         'onderhanden': 'Nee',  // In uitvoering
         'aan':         'Nee',  // Aangemaakt
     };
     // Statuses that also force Uitgevoerd = Vervallen
-    const STATUS_VERVALLEN = new Set(['annul', 'vervallen']);
+    const STATUS_VERVALLEN = new Set(['annul', 'verv', 'vervallen', 'waopo']);
 
     // Map one raw CSV row to record fields; appends to warnings[] for unknown statuses
     function csvRowToRecord(row, warnings) {
