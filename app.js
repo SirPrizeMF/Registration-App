@@ -15,10 +15,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const rowCount = document.getElementById('rowCount');
     const modalOverlay = modal.querySelector('.modal-overlay');
 
+    // Waar confirmation dialog elements
+    const waarConfirmDialog = document.getElementById('waarConfirmDialog');
+    const waarConfirmMsg    = document.getElementById('waarConfirmMsg');
+    const waarConfirmJa     = document.getElementById('waarConfirmJa');
+    const waarConfirmNee    = document.getElementById('waarConfirmNee');
+
     let records = loadRecords();
     let waarMappings    = loadWaarMappings();
     let waarNeedsReview = loadWaarNeedsReview();
     let editingId = null;
+    let pendingWaarEdit = null; // { el, original, newValue } while confirmation dialog is open
 
     // Sort & filter state
     let sortKey = null;
@@ -353,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tableBody.appendChild(tr);
             updateRowCount(0, 0);
             initTextareaHeights();
+            updateStickyTops();
             return;
         }
 
@@ -434,6 +442,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateRowCount(displayed.length, allGroups.size);
         initTextareaHeights();
+        updateStickyTops();
+    }
+
+    // Keep the filter row's sticky offset equal to the actual rendered height of the
+    // header row, so both rows freeze correctly at the top when scrolling.
+    function updateStickyTops() {
+        const headerRow = document.getElementById('headerRow');
+        if (!headerRow) return;
+        const h = headerRow.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--filter-row-top', h + 'px');
     }
 
     // Set textarea heights to fit their content (JS fallback for field-sizing: content)
@@ -758,13 +776,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Event: commit a "waar" correction on focusout
-    tableBody.addEventListener('focusout', (e) => {
-        const el = e.target;
-        if (!el.classList.contains('waar-input')) return;
-        const original = el.dataset.original;
-        const newValue = el.value.trim();
-        if (!newValue || newValue === original) return;
+    // Commit a confirmed "waar" correction (called after "Ja" in the dialog)
+    function commitWaarEdit(original, newValue) {
         // Propagate the correction to every record that shares the original value
         records.forEach(r => { if (r.waar === original) r.waar = newValue; });
         // Persist the mapping so future imports auto-correct the same value
@@ -780,6 +793,40 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTable();
         wrapper.scrollTop = scrollTop;
         wrapper.scrollLeft = scrollLeft;
+    }
+
+    // Event: on focusout of a waar-input, show a confirmation dialog
+    tableBody.addEventListener('focusout', (e) => {
+        const el = e.target;
+        if (!el.classList.contains('waar-input')) return;
+        const original = el.dataset.original;
+        const newValue = el.value.trim();
+        if (!newValue || newValue === original) return;
+        // Store the pending edit and ask for confirmation
+        pendingWaarEdit = { el, original, newValue };
+        waarConfirmMsg.textContent =
+            `Wilt u dit veld aanpassen naar "${newValue}"? ` +
+            'Aanpassen is daarna niet meer mogelijk';
+        waarConfirmDialog.classList.remove('hidden');
+        waarConfirmJa.focus();
+    });
+
+    // Event: "Ja" — commit the pending edit
+    waarConfirmJa.addEventListener('click', () => {
+        waarConfirmDialog.classList.add('hidden');
+        if (!pendingWaarEdit) return;
+        const { original, newValue } = pendingWaarEdit;
+        pendingWaarEdit = null;
+        commitWaarEdit(original, newValue);
+    });
+
+    // Event: "Nee" — abort; restore the input to its original value
+    waarConfirmNee.addEventListener('click', () => {
+        waarConfirmDialog.classList.add('hidden');
+        if (!pendingWaarEdit) return;
+        const { el, original } = pendingWaarEdit;
+        pendingWaarEdit = null;
+        el.value = original;
     });
 
     // Event: Enter key confirms a "waar" correction (triggers focusout)
@@ -790,9 +837,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Event: Close modal with Escape key
+    // Event: Close modal / confirmation dialog with Escape key
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+        if (e.key !== 'Escape') return;
+        if (!waarConfirmDialog.classList.contains('hidden')) {
+            waarConfirmNee.click();
+        } else if (!modal.classList.contains('hidden')) {
             closeModal();
         }
     });
@@ -1071,6 +1121,10 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsText(file);
         e.target.value = '';
     });
+
+    // Re-compute sticky offsets when the user resizes the window (font/zoom changes
+    // can alter the header row height).
+    window.addEventListener('resize', updateStickyTops);
 
     // Initial render
     renderTable();
