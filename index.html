@@ -17,6 +17,7 @@
                 <button id="expandAllBtn" class="btn btn-secondary">Alles uitklappen</button>
                 <button id="collapseAllBtn" class="btn btn-secondary">Alles inklappen</button>
                 <button id="addRowBtn" class="btn btn-primary">+ Nieuw Record</button>
+                <button id="changelogToggleBtn" class="btn btn-secondary">Wijzigingslog</button>
             </div>
         </header>
 
@@ -98,6 +99,14 @@
 
         <div class="table-footer">
             <span id="rowCount">0 records</span>
+        </div>
+
+        <div id="changelogPanel" class="changelog-panel hidden">
+            <div class="changelog-header">
+                <h2>Wijzigingslog</h2>
+                <button id="changelogClearBtn" class="btn btn-secondary btn-sm">Wis log</button>
+            </div>
+            <ul id="changelogList" class="changelog-list"></ul>
         </div>
     </div>
 
