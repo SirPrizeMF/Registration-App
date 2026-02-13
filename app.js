@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const MONTEUR_OPTIONS = ['', 'Amadeusz', 'Devin', 'Dimitri', 'Dylan', 'Ferry', 'Jayden', 'Johan', 'Kevin', 'Koen', 'Leendert', 'Michel', 'Mohammed', 'Richaino', 'Robert-Jan', 'Rowan', 'Storm', 'Tomasz', 'Willem', 'Yoni'];
     const UITGEVOERD_OPTIONS = ['Nee', 'Bezig', 'Ja', 'Vervallen'];
     const AFGEMELD_OPTIONS = ['Nee', 'Ja'];
-    const REFERENTIE_OPTIONS = ['Nee', 'Ingevuld, nakijken', 'Ja', 'Onnodig'];
+    const REFERENTIE_OPTIONS = ['Nee', 'Ingevuld', 'Ja', 'Onnodig'];
     const ARCHIEF_OPTIONS = ['Ja', 'Onvolledig', 'Nee'];
     const VERVOLG_OPTIONS = ['Nee', 'Gepland', 'Ja', 'Onbekend'];
 
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const STATUS_RANK = {
         uitgevoerd:    ['Nee', 'Bezig', 'Ja', 'Vervallen'],
         afgemeld:      ['Nee', 'Ja'],
-        referentie:    ['Nee', 'Ingevuld, nakijken', 'Ja', 'Onnodig'],
+        referentie:    ['Nee', 'Ingevuld', 'Ja', 'Onnodig'],
         archiefGevuld: ['Nee', 'Onvolledig', 'Ja'],
         vervolg:       ['Ja', 'Onbekend', 'Gepland', 'Nee'],
     };
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const rules = {
             uitgevoerd:   { green: ['Ja', 'Vervallen'], yellow: ['Bezig'], red: ['Nee'] },
             afgemeld:     { green: ['Ja'], red: ['Nee'] },
-            referentie:   { green: ['Ja', 'Onnodig'], yellow: ['Ingevuld, nakijken'], red: ['Nee'] },
+            referentie:   { green: ['Ja', 'Onnodig'], yellow: ['Ingevuld'], red: ['Nee'] },
             archiefGevuld:{ green: ['Ja'], yellow: ['Onvolledig'], red: ['Nee'] },
             vervolg:      { green: ['Nee', 'Gepland'], yellow: ['Onbekend'], red: ['Ja'] },
         };
@@ -868,7 +868,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Ref. from Referentie column
         const refRaw = col(row, 'Referentie');
-        const referentie = refRaw ? 'Ingevuld, nakijken' : 'Nee';
+        const referentie = refRaw ? 'Ingevuld' : 'Nee';
 
         return { regNummer, woNummer, waar, datumAanvang, afgemeld, referentie };
     }
