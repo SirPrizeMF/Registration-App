@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const STORAGE_KEY = 'registrationAppData';
+    const WAAR_MAP_KEY = 'registrationAppWaarMap';
     const REG_PREFIX = '460265';
     const WO_PREFIX = '460260';
 
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalOverlay = modal.querySelector('.modal-overlay');
 
     let records = loadRecords();
+    let waarMappings = loadWaarMappings();
     let editingId = null;
 
     // Sort & filter state
@@ -136,6 +138,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save records to localStorage
     function saveRecords() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    // Load/save "Waar" correction mappings (original → corrected)
+    function loadWaarMappings() {
+        try { return JSON.parse(localStorage.getItem(WAAR_MAP_KEY) || '{}'); }
+        catch (e) { return {}; }
+    }
+    function saveWaarMappings() {
+        localStorage.setItem(WAAR_MAP_KEY, JSON.stringify(waarMappings));
     }
 
     // Format date for display (YYYY-MM-DD → DD-MM-YYYY)
@@ -301,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             ${regCell}
             <td class="score-${sc}">${escapeHtml(record.woNummer)}</td>
-            <td class="score-${sc}">${escapeHtml(record.waar)}</td>
+            <td class="score-${sc}">${buildWaarCell(record.waar, id)}</td>
             <td class="score-${sc}">${buildSelect('monteur', record.monteur, id, MONTEUR_OPTIONS)}</td>
             <td class="score-${sc}">${buildDateInput('datumAanvang', record.datumAanvang, id)}</td>
             <td class="score-${sc}">${buildDateInput('datumEind', record.datumEind, id)}</td>
@@ -359,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.innerHTML = `
                     <td class="score-${sc}">${expandBtn}${escapeHtml(reg)}${countBadge}</td>
                     <td class="score-${sc}"></td>
-                    <td class="score-${sc}">${escapeHtml(recs[0].waar)}</td>
+                    <td class="score-${sc}">${buildWaarCellReadonly(recs[0].waar)}</td>
                     <td class="score-${sc}"></td>
                     <td class="score-${sc}"></td>
                     <td class="score-${sc}"></td>
@@ -394,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.innerHTML = `
                     <td class="score-${sc}">${expandBtn}${escapeHtml(record.regNummer)}${countBadge}</td>
                     <td class="score-${sc}">${escapeHtml(record.woNummer)}</td>
-                    <td class="score-${sc}">${escapeHtml(record.waar)}</td>
+                    <td class="score-${sc}">${buildWaarCell(record.waar, id)}</td>
                     <td class="score-${sc}">${buildSelect('monteur', record.monteur, id, MONTEUR_OPTIONS)}</td>
                     <td class="score-${sc}${aanvangSpecial ? ' cell-overdue' : ''}">${buildDateInput('datumAanvang', record.datumAanvang, id)}</td>
                     <td class="score-${sc}${eindOverdue ? ' cell-overdue' : ''}">${buildDateInput('datumEind', record.datumEind, id)}</td>
@@ -713,6 +724,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Event: commit a "waar" correction on focusout
+    tableBody.addEventListener('focusout', (e) => {
+        const el = e.target;
+        if (!el.classList.contains('waar-input')) return;
+        const original = el.dataset.original;
+        const newValue = el.value.trim();
+        if (!newValue || newValue === original) return;
+        // Propagate the correction to every record that shares the original value
+        records.forEach(r => { if (r.waar === original) r.waar = newValue; });
+        // Persist the mapping so future imports auto-correct the same value
+        waarMappings[original] = newValue;
+        saveWaarMappings();
+        saveRecords();
+        const wrapper = document.querySelector('.table-wrapper');
+        const scrollTop = wrapper.scrollTop;
+        const scrollLeft = wrapper.scrollLeft;
+        renderTable();
+        wrapper.scrollTop = scrollTop;
+        wrapper.scrollLeft = scrollLeft;
+    });
+
+    // Event: Enter key confirms a "waar" correction (triggers focusout)
+    tableBody.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.classList.contains('waar-input')) {
+            e.preventDefault();
+            e.target.blur();
+        }
+    });
+
     // Event: Close modal with Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
@@ -786,6 +826,44 @@ document.addEventListener('DOMContentLoaded', () => {
         return s.startsWith('NRC-') ? s.slice(4) : s;
     }
 
+    // Transform a raw "Dossier" value from CSV into the stored "waar" value:
+    // 1. Strip "NRC" + any following dashes (e.g. "NRC-Foo" → "Foo", "NRCFoo" → "Foo")
+    // 2. Apply any known user correction mapping (if the address was previously corrected)
+    function processWaar(raw) {
+        if (!raw) return raw;
+        let v = raw.trim();
+        // Strip leading "NRC" + optional dashes
+        if (/^NRC-*/i.test(v)) v = v.replace(/^NRC-*/i, '');
+        // Apply persisted correction mapping
+        if (Object.prototype.hasOwnProperty.call(waarMappings, v)) v = waarMappings[v];
+        return v;
+    }
+
+    // Returns true when a "waar" value needs manual correction (starts with 4 digits).
+    function waarNeedsFlag(value) {
+        return /^\d{4}/.test(value || '');
+    }
+
+    // Build the table cell content for a "waar" value.
+    // Flagged values (start with 4 digits) get a red editable input; others plain text.
+    function buildWaarCell(value, id) {
+        if (waarNeedsFlag(value)) {
+            const esc = escapeHtml(value || '');
+            return `<input type="text" class="inline-text waar-input waar-flagged" ` +
+                   `data-id="${id}" data-field="waar" data-original="${esc}" ` +
+                   `value="${esc}" title="Aanpassen vereist: begint met cijfers">`;
+        }
+        return escapeHtml(value);
+    }
+
+    // Build a read-only (non-editable) flag indicator for collapsed group rows.
+    function buildWaarCellReadonly(value) {
+        if (waarNeedsFlag(value)) {
+            return `<span class="waar-flagged-text" title="Aanpassen vereist: begint met cijfers">${escapeHtml(value)}</span>`;
+        }
+        return escapeHtml(value);
+    }
+
     // Parse CSV text into an array of row objects keyed by header name
     function parseCsvRaw(text) {
         const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
@@ -850,7 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function csvRowToRecord(row, warnings) {
         const regNummer  = stripNrc(col(row, 'Registratienr.', 'Registratienr', 'Registratienummer'));
         const woNummer   = col(row, 'Werkordernummer', 'WO-nr.', 'WO-nummer');
-        const waar       = stripNrc(col(row, 'Dossier'));
+        const waar       = processWaar(col(row, 'Dossier'));
         const datumAanvang = normaliseDate(col(row, 'Uitvoerings datum', 'Uitvoeringsdatum'));
 
         // Afg. from Status omschr.
