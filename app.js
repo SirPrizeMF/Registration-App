@@ -91,17 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Cascade rules triggered by an Afg. change:
-    //   Afg. = Ja  → Uitg. = Ja (unless Uitg. is already Vervallen)
-    //   Afg. = Nee → Vervolg = Onbekend
-    function applyAfgemeldRules(record) {
-        if (record.afgemeld === 'Ja') {
-            if (record.uitgevoerd !== 'Vervallen') record.uitgevoerd = 'Ja';
-        } else if (record.afgemeld === 'Nee') {
-            record.vervolg = 'Onbekend';
-        }
-    }
-
     // Calculate score based on field values
     function calculateScore(record) {
         let score = 0;
@@ -675,7 +664,6 @@ document.addEventListener('DOMContentLoaded', () => {
     recordForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const data = getFormData();
-        applyAfgemeldRules(data);
 
         if (editingId) {
             const index = records.findIndex(r => r.id === editingId);
@@ -817,7 +805,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const prevSnap = { uitgevoerd: record.uitgevoerd, afgemeld: record.afgemeld, vervolg: record.vervolg };
             record[field] = newValue;
-            if (field === 'afgemeld') applyAfgemeldRules(record);
             const trackedFields = [...new Set([field, 'uitgevoerd', 'afgemeld', 'vervolg'])];
             const changes = trackedFields
                 .filter(f => (prevSnap[f] !== undefined ? prevSnap[f] : '') !== (record[f] || '') ||
@@ -1092,26 +1079,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return '';
     }
 
-    // Status (short code) → Afg. mapping
-    const STATUS_TO_AFG = {
-        '1ewog':       'Ja',   // 1e werkorder gereed
-        'faccr':       'Ja',   // Factuur gecrediteerd
-        'facjo':       'Ja',   // Factuur gejournaliseerd
-        'gere':        'Ja',   // Gereed
-        'gf':          'Ja',   // Gereed gefactureerd
-        'gnf':         'Ja',   // Gereed niet gefactureerd
-        // 'verw' is intentionally omitted — those rows are skipped on import
-        'annul':       'Ja',   // Geannuleerd → also Uitg. = Vervallen
-        'verv':        'Ja',   // Vervallen (short code) → also Uitg. = Vervallen
-        'vervallen':   'Ja',   // Vervallen (long form, kept for safety) → also Uitg. = Vervallen
-        'waopo':       'Ja',   // Wacht op opdracht → also Uitg. = Vervallen
-        'onderhanden': 'Nee',  // In uitvoering
-        'aan':         'Nee',  // Aangemaakt
-    };
-    // Statuses that also force Uitgevoerd = Vervallen
-    const STATUS_VERVALLEN = new Set(['annul', 'verv', 'vervallen', 'waopo']);
-
-    // Map one raw CSV row to record fields; appends to warnings[] for unknown statuses
+    // Map one raw CSV row to record fields
     function csvRowToRecord(row, warnings) {
         const regNummer  = stripNrc(col(row, 'Registratienr.', 'Registratienr', 'Registratienummer'));
         const woNummer   = col(row, 'Werkordernummer', 'WO-nr.', 'WO-nummer');
@@ -1124,25 +1092,15 @@ document.addEventListener('DOMContentLoaded', () => {
             && !Object.prototype.hasOwnProperty.call(waarMappings, rawDossier.trim());
         const datumAanvang = normaliseDate(col(row, 'Uitvoerings datum', 'Uitvoeringsdatum'));
 
-        // Afg. + Uitg. from Status (short code) — only the 'Status' column is accepted
+        // Status short code — used only to skip 'verw' rows
         const statusRaw = col(row, 'Status');
         const statusKey = statusRaw.toLowerCase().trim();
-        let afgemeld, uitgevoerd;
-        if (STATUS_TO_AFG.hasOwnProperty(statusKey)) {
-            afgemeld   = STATUS_TO_AFG[statusKey];
-            uitgevoerd = STATUS_VERVALLEN.has(statusKey) ? 'Vervallen' : undefined;
-        } else {
-            afgemeld = 'Nee';
-            if (statusRaw) {
-                warnings.push(`WO-nr. ${woNummer || '(leeg)'}: onbekende status "${statusRaw}"`);
-            }
-        }
 
         // Ref. from Referentie column
         const refRaw = col(row, 'Referentie');
         const referentie = refRaw ? 'Ingevuld' : 'Nee';
 
-        return { regNummer, woNummer, waar, waarReview, datumAanvang, afgemeld, uitgevoerd, referentie, statusKey };
+        return { regNummer, woNummer, waar, waarReview, datumAanvang, referentie, statusKey };
     }
 
     // ── CSV file import ──────────────────────────────────────────────
@@ -1176,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let added = 0, updated = 0, skipped = 0, tooOld = 0;
             const clAdded   = [];
             const clUpdated = [];
-            const importFields = ['regNummer','waar','datumAanvang','afgemeld','uitgevoerd','referentie','vervolg'];
+            const importFields = ['regNummer','waar','datumAanvang','referentie','vervolg'];
 
             rawRows.forEach(row => {
                 const imp = csvRowToRecord(row, warnings);
@@ -1194,9 +1152,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (imp.regNummer)    existing.regNummer    = imp.regNummer;
                     if (imp.waar)         existing.waar         = imp.waar;
                     if (imp.datumAanvang) existing.datumAanvang = imp.datumAanvang;
-                    existing.afgemeld  = imp.afgemeld;
-                    if (imp.uitgevoerd !== undefined) existing.uitgevoerd = imp.uitgevoerd;
-                    applyAfgemeldRules(existing);
                     if (existing.referentie === 'Nee' && imp.referentie !== 'Nee') {
                         existing.referentie = imp.referentie;
                     }
@@ -1214,14 +1169,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         monteur:       '',
                         datumAanvang:  imp.datumAanvang,
                         datumEind:     '',
-                        uitgevoerd:    imp.uitgevoerd !== undefined ? imp.uitgevoerd : 'Nee',
-                        afgemeld:      imp.afgemeld,
+                        uitgevoerd:    'Nee',
+                        afgemeld:      'Nee',
                         referentie:    imp.referentie,
                         archiefGevuld: 'Ja',
                         vervolg:       'Nee',
                         opmerking:     '',
                     };
-                    applyAfgemeldRules(newRec);
                     records.push(newRec);
                     clAdded.push(imp.woNummer);
                     added++;
