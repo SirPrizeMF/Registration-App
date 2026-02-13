@@ -1,8 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const STORAGE_KEY = 'registrationAppData';
-    const WAAR_MAP_KEY    = 'registrationAppWaarMap';
-    const WAAR_REVIEW_KEY  = 'registrationAppWaarReview';
-    const CHANGELOG_KEY    = 'registrationAppChangelog';
+document.addEventListener('DOMContentLoaded', async () => {
     const REG_PREFIX = '460265';
     const WO_PREFIX = '460260';
 
@@ -28,10 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const changelogToggleBtn = document.getElementById('changelogToggleBtn');
     const changelogClearBtn  = document.getElementById('changelogClearBtn');
 
-    let records = loadRecords();
-    let waarMappings    = loadWaarMappings();
-    let waarNeedsReview = loadWaarNeedsReview();
-    let changelog       = loadChangelog();
+    const _db = await fetch('/api/db').then(r => r.json()).catch(() => ({}));
+    const _raw = _db.records || [];
+    const _dateOk = _raw.filter(r => !r.datumAanvang || r.datumAanvang >= '2026-01-01');
+    const _regHasDate = new Set(_dateOk.filter(r => r.datumAanvang).map(r => r.regNummer));
+    let records = _dateOk.filter(r => _regHasDate.has(r.regNummer));
+    let waarMappings    = _db.waarMappings || {};
+    let waarNeedsReview = new Set(_db.waarReview || []);
+    let changelog       = _db.changelog || [];
     let editingId = null;
     let pendingWaarEdit = null; // { el, original, newValue } while confirmation dialog is open
 
@@ -119,55 +119,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return '';
     }
 
-    // Load records from localStorage, seed with INITIAL_DATA on first run.
-    // Always strips records with datumAanvang before 2026 and persists the result.
-    function loadRecords() {
-        let data;
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            data = JSON.parse(stored);
-        } else if (typeof INITIAL_DATA !== 'undefined' && INITIAL_DATA.length > 0) {
-            data = [...INITIAL_DATA];
-        } else {
-            return [];
-        }
-        const dateOk = data.filter(r => !r.datumAanvang || r.datumAanvang >= '2026-01-01');
-        // Drop reg. nr. groups where every WO-nr has an empty datumAanvang.
-        const regHasDate = new Set(
-            dateOk.filter(r => r.datumAanvang).map(r => r.regNummer)
-        );
-        const filtered = dateOk.filter(r => regHasDate.has(r.regNummer));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-        return filtered;
+    // Persist all app state to the server
+    function saveDb() {
+        fetch('/api/db', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ records, changelog, waarMappings, waarReview: [...waarNeedsReview] })
+        }).catch(err => console.error('Save failed:', err));
     }
-
-    // Save records to localStorage
-    function saveRecords() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-    }
-
-    // Load/save "Waar" correction mappings (original → corrected)
-    function loadWaarMappings() {
-        try { return JSON.parse(localStorage.getItem(WAAR_MAP_KEY) || '{}'); }
-        catch (e) { return {}; }
-    }
-    function saveWaarMappings() {
-        localStorage.setItem(WAAR_MAP_KEY, JSON.stringify(waarMappings));
-    }
-    function loadWaarNeedsReview() {
-        try { return new Set(JSON.parse(localStorage.getItem(WAAR_REVIEW_KEY) || '[]')); }
-        catch (e) { return new Set(); }
-    }
-    function saveWaarNeedsReview() {
-        localStorage.setItem(WAAR_REVIEW_KEY, JSON.stringify([...waarNeedsReview]));
-    }
-    function loadChangelog() {
-        try { return JSON.parse(localStorage.getItem(CHANGELOG_KEY) || '[]'); }
-        catch (e) { return []; }
-    }
-    function saveChangelog() {
-        localStorage.setItem(CHANGELOG_KEY, JSON.stringify(changelog));
-    }
+    // Debounced save for high-frequency events (e.g. keystroke)
+    let _saveTimer = null;
+    function saveDbDebounced() { clearTimeout(_saveTimer); _saveTimer = setTimeout(saveDb, 500); }
+    function saveRecords()        { saveDb(); }
+    function saveWaarMappings()   { saveDb(); }
+    function saveWaarNeedsReview(){ saveDb(); }
+    function saveChangelog()      { saveDb(); }
     function addChangelogEntry(entry) {
         changelog.unshift({ ts: Date.now(), ...entry });
         if (changelog.length > 500) changelog.length = 500;
@@ -828,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const record = records.find(r => r.id === el.dataset.id);
         if (record) {
             record[el.dataset.field] = el.value;
-            saveRecords();
+            saveDbDebounced();
         }
         if (isTextarea) {
             el.style.height = 'auto';
