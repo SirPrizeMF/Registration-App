@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.innerHTML = `
                     <td class="score-${sc}">${expandBtn}${escapeHtml(reg)}${countBadge}</td>
                     <td class="score-${sc}"></td>
-                    <td class="score-${sc}">${buildWaarCellReadonly(recs[0].waar)}</td>
+                    <td class="score-${sc}">${buildWaarCell(recs[0].waar, recs[0].id)}</td>
                     <td class="score-${sc}"></td>
                     <td class="score-${sc}"></td>
                     <td class="score-${sc}"></td>
@@ -563,6 +563,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ── Event handlers ───────────────────────────────────────────────
+
+    // Event: Apply processWaar to every existing record
+    document.getElementById('verwerkWaarBtn').addEventListener('click', () => {
+        let changed = 0;
+        records.forEach(r => {
+            const updated = processWaar(r.waar);
+            if (updated !== r.waar) { r.waar = updated; changed++; }
+        });
+        if (changed > 0) {
+            saveRecords();
+            renderTable();
+            alert(`Waar verwerkt: ${changed} record(s) bijgewerkt.`);
+        } else {
+            alert('Geen wijzigingen: alle Waar-waarden zijn al correct.');
+        }
+    });
 
     // Event: Expand all groups
     document.getElementById('expandAllBtn').addEventListener('click', () => {
@@ -856,13 +872,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return escapeHtml(value);
     }
 
-    // Build a read-only (non-editable) flag indicator for collapsed group rows.
-    function buildWaarCellReadonly(value) {
-        if (waarNeedsFlag(value)) {
-            return `<span class="waar-flagged-text" title="Aanpassen vereist: begint met cijfers">${escapeHtml(value)}</span>`;
-        }
-        return escapeHtml(value);
-    }
 
     // Parse CSV text into an array of row objects keyed by header name
     function parseCsvRaw(text) {
