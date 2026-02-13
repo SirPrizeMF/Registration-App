@@ -1123,7 +1123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const datumAanvang = normaliseDate(col(row, 'Uitvoerings datum', 'Uitvoeringsdatum'));
 
         // Afg. + Uitg. from Status (short code)
-        const statusRaw = col(row, 'Status omschr.', 'Status omschr', 'Statusomschrijving', 'Status');
+        const statusRaw = col(row, 'Status', 'Status omschr.', 'Status omschr', 'Statusomschrijving');
         const statusKey = statusRaw.toLowerCase().trim();
         let afgemeld, uitgevoerd;
         if (STATUS_TO_AFG.hasOwnProperty(statusKey)) {
