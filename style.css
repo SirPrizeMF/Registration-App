@@ -76,7 +76,7 @@ body {
     background-color: #dc2626;
     color: #fff;
     padding: 2px 5px;
-    font-size: 0.6rem;
+    font-size: 0.75rem;
 }
 
 .btn-danger:hover {
@@ -87,7 +87,7 @@ body {
     background-color: #f59e0b;
     color: #fff;
     padding: 2px 5px;
-    font-size: 0.6rem;
+    font-size: 0.75rem;
     margin-right: 2px;
 }
 
@@ -131,7 +131,7 @@ thead {
 thead th {
     padding: 6px 4px;
     text-align: left;
-    font-size: 0.65rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: #fff;
     text-transform: uppercase;
@@ -161,7 +161,7 @@ thead th:last-child {
 }
 
 .sort-arrow {
-    font-size: 0.55rem;
+    font-size: 0.7rem;
 }
 
 /* Column resize handle */
@@ -185,7 +185,7 @@ thead th:last-child {
     border: none;
     color: inherit;
     cursor: pointer;
-    font-size: 0.55rem;
+    font-size: 0.7rem;
     padding: 0 3px 0 0;
     vertical-align: middle;
 }
@@ -194,7 +194,7 @@ thead th:last-child {
     display: inline-block;
     background: rgba(255, 255, 255, 0.25);
     color: inherit;
-    font-size: 0.55rem;
+    font-size: 0.7rem;
     font-weight: 700;
     padding: 0 4px;
     margin-left: 3px;
@@ -228,7 +228,7 @@ thead th:last-child {
 .filter-select {
     width: 100%;
     padding: 2px 3px;
-    font-size: 0.6rem;
+    font-size: 0.75rem;
     border: 1px solid #d1d5db;
     border-radius: 3px;
     background: #fff;
@@ -254,7 +254,7 @@ tbody tr:nth-child(even):hover {
 
 tbody td {
     padding: 4px 4px;
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     color: #374151;
     white-space: nowrap;
     overflow: hidden;
@@ -333,7 +333,7 @@ td.cell-opmerking {
 .inline-select {
     width: 100%;
     padding: 1px 2px;
-    font-size: 0.65rem;
+    font-size: 0.8rem;
     font-weight: 500;
     border: none;
     border-radius: 3px;
@@ -375,7 +375,7 @@ td.cell-opmerking {
     background: none;
     border: none;
     padding: 0 1px;
-    font-size: 0.6rem;
+    font-size: 0.75rem;
     cursor: pointer;
     color: inherit;
     opacity: 0.5;
@@ -402,7 +402,7 @@ td.cell-opmerking {
 .inline-date {
     width: 100%;
     padding: 1px 2px;
-    font-size: 0.65rem;
+    font-size: 0.8rem;
     border: none;
     border-radius: 3px;
     background: transparent;
@@ -422,7 +422,7 @@ td.cell-opmerking {
 .inline-text {
     width: 100%;
     padding: 1px 3px;
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     border: 1px solid transparent;
     border-radius: 3px;
     background: transparent;
@@ -443,7 +443,7 @@ td.cell-opmerking {
 .inline-textarea {
     width: 100%;
     padding: 1px 3px;
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     font-family: inherit;
     line-height: 1.4;
     border: 1px solid transparent;
@@ -659,7 +659,7 @@ td.cell-opmerking {
 .ymf-btn {
     width: 100%;
     padding: 2px 3px;
-    font-size: 0.6rem;
+    font-size: 0.75rem;
     border: 1px solid #d1d5db;
     border-radius: 3px;
     background: #fff;
@@ -693,7 +693,7 @@ td.cell-opmerking {
     align-items: center;
     gap: 4px;
     padding: 3px 6px;
-    font-size: 0.6rem;
+    font-size: 0.75rem;
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
@@ -721,7 +721,7 @@ td.cell-opmerking {
 .date-range-input {
     width: 100%;
     padding: 2px 3px;
-    font-size: 0.6rem;
+    font-size: 0.75rem;
     border: 1px solid #d1d5db;
     border-radius: 3px;
     background: #fff;
