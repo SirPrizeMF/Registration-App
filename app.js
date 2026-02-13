@@ -72,6 +72,17 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Cascade rules triggered by an Afg. change:
+    //   Afg. = Ja  → Uitg. = Ja
+    //   Afg. = Nee → Vervolg = Onbekend
+    function applyAfgemeldRules(record) {
+        if (record.afgemeld === 'Ja') {
+            record.uitgevoerd = 'Ja';
+        } else if (record.afgemeld === 'Nee') {
+            record.vervolg = 'Onbekend';
+        }
+    }
+
     // Calculate score based on field values
     function calculateScore(record) {
         let score = 0;
@@ -127,12 +138,21 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
     }
 
-    // Format date for display (DD-MM-YYYY)
+    // Format date for display (YYYY-MM-DD → DD-MM-YYYY)
     function formatDate(dateStr) {
         if (!dateStr) return '';
         const parts = dateStr.split('-');
         if (parts.length !== 3) return dateStr;
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
+    // Parse display date (DD-MM-YYYY → YYYY-MM-DD); passes through ISO strings unchanged
+    function parseDisplayDate(s) {
+        if (!s) return '';
+        const m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+        if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        return '';
     }
 
     // Apply filters and sorting to records
@@ -251,9 +271,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
-    // Build an inline <input type="date"> for table cells
+    // Build an inline date text input displaying DD-MM-YYYY
     function buildDateInput(field, value, id) {
-        return `<input type="date" class="inline-date" data-id="${id}" data-field="${field}" value="${escapeHtml(value || '')}">`;
+        const display = value ? formatDate(value) : '';
+        return `<input type="text" class="inline-date" data-id="${id}" data-field="${field}" data-type="date" value="${escapeHtml(display)}" placeholder="DD-MM-JJJJ">`;
     }
 
     // Build an inline <input type="text"> for table cells
@@ -360,6 +381,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? `<span class="group-count">${recs.length}</span>`
                     : '';
 
+                const today = new Date().toISOString().slice(0, 10);
+                const eindOverdue = record.datumEind && record.datumEind < today && record.afgemeld === 'Nee';
+                const aanvangSpecial = record.datumAanvang && record.datumAanvang.slice(5) === '12-31';
+
                 const tr = document.createElement('tr');
                 if (hasMultiple) tr.classList.add('group-parent');
                 tr.innerHTML = `
@@ -367,8 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="score-${sc}">${escapeHtml(record.woNummer)}</td>
                     <td class="score-${sc}">${escapeHtml(record.waar)}</td>
                     <td class="score-${sc}">${buildSelect('monteur', record.monteur, id, MONTEUR_OPTIONS)}</td>
-                    <td class="score-${sc}">${buildDateInput('datumAanvang', record.datumAanvang, id)}</td>
-                    <td class="score-${sc}">${buildDateInput('datumEind', record.datumEind, id)}</td>
+                    <td class="score-${sc}${aanvangSpecial ? ' cell-overdue' : ''}">${buildDateInput('datumAanvang', record.datumAanvang, id)}</td>
+                    <td class="score-${sc}${eindOverdue ? ' cell-overdue' : ''}">${buildDateInput('datumEind', record.datumEind, id)}</td>
                     <td class="cell-status ${statusColor('uitgevoerd', record.uitgevoerd)}">${buildSelect('uitgevoerd', record.uitgevoerd, id, UITGEVOERD_OPTIONS)}</td>
                     <td class="cell-status ${statusColor('afgemeld', record.afgemeld)}">${buildSelect('afgemeld', record.afgemeld, id, AFGEMELD_OPTIONS)}</td>
                     <td class="cell-status ${statusColor('referentie', record.referentie)}">${buildSelect('referentie', record.referentie, id, REFERENTIE_OPTIONS)}</td>
@@ -548,6 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
     recordForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const data = getFormData();
+        applyAfgemeldRules(data);
 
         if (editingId) {
             const index = records.findIndex(r => r.id === editingId);
@@ -620,11 +646,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const record = records.find(r => r.id === el.dataset.id);
         if (!record) return;
         const field = el.dataset.field;
+        const newValue = el.dataset.type === 'date' ? parseDisplayDate(el.value) : el.value;
         // For referentie and archiefGevuld, propagate the change to every WO-nr in the group
         if (field === 'referentie' || field === 'archiefGevuld') {
-            records.forEach(r => { if (r.regNummer === record.regNummer) r[field] = el.value; });
+            records.forEach(r => { if (r.regNummer === record.regNummer) r[field] = newValue; });
         } else {
-            record[field] = el.value;
+            record[field] = newValue;
+            if (field === 'afgemeld') applyAfgemeldRules(record);
         }
         saveRecords();
         renderTable();
@@ -837,12 +865,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (imp.waar)         existing.waar         = imp.waar;
                     if (imp.datumAanvang) existing.datumAanvang = imp.datumAanvang;
                     existing.afgemeld = imp.afgemeld;
+                    applyAfgemeldRules(existing);
                     if (existing.referentie === 'Nee' && imp.referentie !== 'Nee') {
                         existing.referentie = imp.referentie;
                     }
                     updated++;
                 } else {
-                    records.push({
+                    const newRec = {
                         id:            generateId(),
                         regNummer:     imp.regNummer,
                         woNummer:      imp.woNummer,
@@ -856,7 +885,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         archiefGevuld: 'Ja',
                         vervolg:       'Nee',
                         opmerking:     '',
-                    });
+                    };
+                    applyAfgemeldRules(newRec);
+                    records.push(newRec);
                     added++;
                 }
             });

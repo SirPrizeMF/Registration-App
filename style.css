@@ -324,6 +324,11 @@ td.cell-opmerking {
     color: #fff !important;
 }
 
+.cell-overdue {
+    background-color: #3b0000 !important;
+    color: #fca5a5 !important;
+}
+
 /* Inline editing controls */
 .inline-select {
     width: 100%;
