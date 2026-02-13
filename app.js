@@ -271,10 +271,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
-    // Build an inline date text input displaying DD-MM-YYYY
+    // Build an inline date cell: text input (DD-MM-YYYY) + calendar button + hidden date picker
     function buildDateInput(field, value, id) {
         const display = value ? formatDate(value) : '';
-        return `<input type="text" class="inline-date" data-id="${id}" data-field="${field}" data-type="date" value="${escapeHtml(display)}" placeholder="DD-MM-JJJJ">`;
+        return `<span class="date-wrapper">` +
+            `<input type="text" class="inline-date" data-id="${id}" data-field="${field}" data-type="date" value="${escapeHtml(display)}" placeholder="DD-MM-JJJJ">` +
+            `<button type="button" class="date-picker-btn" tabindex="-1" title="Kalender openen">&#128197;</button>` +
+            `<input type="date" class="hidden-date-input" tabindex="-1" value="${escapeHtml(value || '')}">` +
+            `</span>`;
     }
 
     // Build an inline <input type="text"> for table cells
@@ -593,6 +597,11 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelBtn.addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', closeModal);
 
+    // Prevent the calendar button from stealing focus from the text input (avoids premature change event)
+    tableBody.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.date-picker-btn')) e.preventDefault();
+    });
+
     // Event: Edit, Delete, or Expand via table delegation
     tableBody.addEventListener('click', (e) => {
         // Expand / collapse button
@@ -605,6 +614,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 expandedGroups.add(reg);
             }
             renderTable();
+            return;
+        }
+
+        // Calendar picker button – open the hidden date input's native picker
+        const datePickerBtn = e.target.closest('.date-picker-btn');
+        if (datePickerBtn) {
+            const hiddenInput = datePickerBtn.nextElementSibling;
+            if (hiddenInput) {
+                try { hiddenInput.showPicker(); } catch (_) {}
+            }
             return;
         }
 
@@ -630,6 +649,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const wrapper = document.querySelector('.table-wrapper');
         const scrollTop = wrapper.scrollTop;
         const scrollLeft = wrapper.scrollLeft;
+
+        // Hidden date input (native calendar picker): sync value back to text input and save
+        if (el.classList.contains('hidden-date-input')) {
+            const dateWrap = el.closest('.date-wrapper');
+            if (!dateWrap) return;
+            const textInput = dateWrap.querySelector('.inline-date');
+            if (!textInput?.dataset.id || !textInput?.dataset.field) return;
+            textInput.value = el.value ? formatDate(el.value) : '';
+            const rec = records.find(r => r.id === textInput.dataset.id);
+            if (!rec) return;
+            rec[textInput.dataset.field] = el.value;
+            saveRecords();
+            renderTable();
+            wrapper.scrollTop = scrollTop;
+            wrapper.scrollLeft = scrollLeft;
+            return;
+        }
 
         // Group-level select (collapsed row): update all records in the group
         if (el.dataset.reg && el.dataset.field) {
