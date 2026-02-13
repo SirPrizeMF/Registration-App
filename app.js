@@ -558,7 +558,8 @@ document.addEventListener('DOMContentLoaded', () => {
         headerCells.forEach(th => {
             const handle = document.createElement('div');
             handle.className = 'resize-handle';
-            th.style.position = 'relative';
+            // position: sticky (from CSS) already creates a containing block for the
+            // absolutely-positioned handle — no inline override needed here.
             th.appendChild(handle);
 
             let startX, startWidth;
