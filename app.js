@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const STORAGE_KEY = 'registrationAppData';
     const WAAR_MAP_KEY    = 'registrationAppWaarMap';
-    const WAAR_REVIEW_KEY = 'registrationAppWaarReview';
+    const WAAR_REVIEW_KEY  = 'registrationAppWaarReview';
+    const CHANGELOG_KEY    = 'registrationAppChangelog';
     const REG_PREFIX = '460265';
     const WO_PREFIX = '460260';
 
@@ -16,14 +17,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalOverlay = modal.querySelector('.modal-overlay');
 
     // Waar confirmation dialog elements
-    const waarConfirmDialog = document.getElementById('waarConfirmDialog');
-    const waarConfirmMsg    = document.getElementById('waarConfirmMsg');
-    const waarConfirmJa     = document.getElementById('waarConfirmJa');
-    const waarConfirmNee    = document.getElementById('waarConfirmNee');
+    const waarConfirmDialog  = document.getElementById('waarConfirmDialog');
+    const waarConfirmMsg     = document.getElementById('waarConfirmMsg');
+    const waarConfirmJa      = document.getElementById('waarConfirmJa');
+    const waarConfirmNee     = document.getElementById('waarConfirmNee');
+
+    // Changelog panel
+    const changelogPanel     = document.getElementById('changelogPanel');
+    const changelogList      = document.getElementById('changelogList');
+    const changelogToggleBtn = document.getElementById('changelogToggleBtn');
+    const changelogClearBtn  = document.getElementById('changelogClearBtn');
 
     let records = loadRecords();
     let waarMappings    = loadWaarMappings();
     let waarNeedsReview = loadWaarNeedsReview();
+    let changelog       = loadChangelog();
     let editingId = null;
     let pendingWaarEdit = null; // { el, original, newValue } while confirmation dialog is open
 
@@ -163,6 +171,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function saveWaarNeedsReview() {
         localStorage.setItem(WAAR_REVIEW_KEY, JSON.stringify([...waarNeedsReview]));
+    }
+    function loadChangelog() {
+        try { return JSON.parse(localStorage.getItem(CHANGELOG_KEY) || '[]'); }
+        catch (e) { return []; }
+    }
+    function saveChangelog() {
+        localStorage.setItem(CHANGELOG_KEY, JSON.stringify(changelog));
+    }
+    function addChangelogEntry(entry) {
+        changelog.unshift({ ts: Date.now(), ...entry });
+        if (changelog.length > 500) changelog.length = 500;
+        saveChangelog();
+        renderChangelog();
+    }
+
+    const FIELD_LABELS = {
+        regNummer: 'Reg. Nr.', woNummer: 'WO-nr.', waar: 'Waar',
+        monteur: 'Monteur', datumAanvang: 'Datum aanvang', datumEind: 'Datum eind',
+        uitgevoerd: 'Uitgevoerd', afgemeld: 'Afgemeld', referentie: 'Referentie',
+        archiefGevuld: 'Archief', vervolg: 'Vervolg', opmerking: 'Opmerking',
+    };
+
+    function formatTs(ts) {
+        const d = new Date(ts);
+        const p = n => String(n).padStart(2, '0');
+        return `${p(d.getHours())}:${p(d.getMinutes())} ${p(d.getDate())}-${p(d.getMonth()+1)}-${d.getFullYear()}`;
     }
 
     // Format date for display (YYYY-MM-DD → DD-MM-YYYY)
@@ -646,10 +680,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (editingId) {
             const index = records.findIndex(r => r.id === editingId);
             if (index !== -1) {
+                const old = records[index];
+                const allFields = ['regNummer','woNummer','waar','monteur','datumAanvang','datumEind',
+                                   'uitgevoerd','afgemeld','referentie','archiefGevuld','vervolg','opmerking'];
+                const changes = allFields
+                    .filter(f => (old[f] || '') !== (data[f] || ''))
+                    .map(f => ({ field: f, from: old[f] || '', to: data[f] || '' }));
                 records[index] = { ...data, id: editingId };
+                if (changes.length > 0) addChangelogEntry({ type: 'edit', wo: data.woNummer, changes });
             }
         } else {
             records.push({ ...data, id: generateId() });
+            addChangelogEntry({ type: 'add', wo: data.woNummer });
         }
 
         saveRecords();
@@ -698,8 +740,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (btn.classList.contains('btn-danger')) {
             if (confirm('Weet je zeker dat je dit record wilt verwijderen?')) {
+                const deleted = records.find(r => r.id === id);
                 records = records.filter(r => r.id !== id);
                 saveRecords();
+                if (deleted) addChangelogEntry({ type: 'delete', wo: deleted.woNummer });
                 renderTable();
             }
         }
@@ -723,7 +767,11 @@ document.addEventListener('DOMContentLoaded', () => {
             textInput.value = el.value ? formatDate(el.value) : '';
             const rec = records.find(r => r.id === textInput.dataset.id);
             if (!rec) return;
-            rec[textInput.dataset.field] = el.value;
+            const dateField = textInput.dataset.field;
+            const oldDate = rec[dateField] || '';
+            rec[dateField] = el.value;
+            if (oldDate !== el.value) addChangelogEntry({ type: 'edit', wo: rec.woNummer,
+                changes: [{ field: dateField, from: oldDate, to: el.value }] });
             saveRecords();
             renderTable();
             wrapper.scrollTop = scrollTop;
@@ -734,7 +782,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Group-level select (collapsed row): update all records in the group
         if (el.dataset.reg && el.dataset.field) {
             const reg = el.dataset.reg;
-            records.forEach(r => { if (r.regNummer === reg) r[el.dataset.field] = el.value; });
+            const grpField = el.dataset.field;
+            const grpNewVal = el.value;
+            records.forEach(r => {
+                if (r.regNummer === reg) {
+                    const oldVal = r[grpField] || '';
+                    r[grpField] = grpNewVal;
+                    if (oldVal !== grpNewVal) addChangelogEntry({ type: 'edit', wo: r.woNummer,
+                        changes: [{ field: grpField, from: oldVal, to: grpNewVal }] });
+                }
+            });
             saveRecords();
             renderTable();
             wrapper.scrollTop = scrollTop;
@@ -749,10 +806,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const newValue = el.dataset.type === 'date' ? parseDisplayDate(el.value) : el.value;
         // For referentie and archiefGevuld, propagate the change to every WO-nr in the group
         if (field === 'referentie' || field === 'archiefGevuld') {
-            records.forEach(r => { if (r.regNummer === record.regNummer) r[field] = newValue; });
+            const oldVal = record[field] || '';
+            records.forEach(r => {
+                if (r.regNummer === record.regNummer) {
+                    r[field] = newValue;
+                    if (oldVal !== newValue) addChangelogEntry({ type: 'edit', wo: r.woNummer,
+                        changes: [{ field, from: oldVal, to: newValue }] });
+                }
+            });
         } else {
+            const prevSnap = { uitgevoerd: record.uitgevoerd, afgemeld: record.afgemeld, vervolg: record.vervolg };
             record[field] = newValue;
             if (field === 'afgemeld') applyAfgemeldRules(record);
+            const trackedFields = [...new Set([field, 'uitgevoerd', 'afgemeld', 'vervolg'])];
+            const changes = trackedFields
+                .filter(f => (prevSnap[f] !== undefined ? prevSnap[f] : '') !== (record[f] || '') ||
+                             (f === field && (prevSnap[f] || '') !== newValue))
+                .map(f => ({ field: f, from: prevSnap[f] !== undefined ? prevSnap[f] : '', to: record[f] || '' }))
+                .filter(c => c.from !== c.to);
+            if (changes.length > 0) addChangelogEntry({ type: 'edit', wo: record.woNummer, changes });
         }
         saveRecords();
         renderTable();
@@ -777,10 +849,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Capture the current value of text/textarea cells when focus enters (for changelog on blur)
+    tableBody.addEventListener('focusin', (e) => {
+        const el = e.target;
+        if ((el.classList.contains('inline-text') || el.classList.contains('inline-textarea')) && el.dataset.id)
+            el.dataset.changelogFrom = el.value;
+    });
+
     // Commit a confirmed "waar" correction (called after "Ja" in the dialog)
     function commitWaarEdit(original, newValue) {
         // Propagate the correction to every record that shares the original value
         records.forEach(r => { if (r.waar === original) r.waar = newValue; });
+        addChangelogEntry({ type: 'waar', from: original, to: newValue });
         // Persist the mapping so future imports auto-correct the same value
         waarMappings[original] = newValue;
         saveWaarMappings();
@@ -796,9 +876,21 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.scrollLeft = scrollLeft;
     }
 
-    // Event: on focusout of a waar-input, show a confirmation dialog
+    // Event: on focusout — log text/textarea changes and handle waar confirmation
     tableBody.addEventListener('focusout', (e) => {
         const el = e.target;
+        // Log text/textarea edits when the user leaves the field
+        if ((el.classList.contains('inline-text') || el.classList.contains('inline-textarea')) && el.dataset.id) {
+            const fromVal = el.dataset.changelogFrom;
+            const toVal   = el.value;
+            if (fromVal !== undefined && fromVal !== toVal) {
+                const rec = records.find(r => r.id === el.dataset.id);
+                if (rec) addChangelogEntry({ type: 'edit', wo: rec.woNummer,
+                    changes: [{ field: el.dataset.field, from: fromVal, to: toVal }] });
+            }
+            delete el.dataset.changelogFrom;
+            return;
+        }
         if (!el.classList.contains('waar-input')) return;
         const original = el.dataset.original;
         const newValue = el.value.trim();
@@ -1066,6 +1158,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const warnings = [];
             let added = 0, updated = 0, skipped = 0, tooOld = 0;
+            const clAdded   = [];
+            const clUpdated = [];
+            const importFields = ['regNummer','waar','datumAanvang','afgemeld','uitgevoerd','referentie','vervolg'];
 
             rawRows.forEach(row => {
                 const imp = csvRowToRecord(row, warnings);
@@ -1079,6 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const existing = records.find(r => r.woNummer === imp.woNummer);
                 if (existing) {
+                    const before = Object.fromEntries(importFields.map(f => [f, existing[f] || '']));
                     if (imp.regNummer)    existing.regNummer    = imp.regNummer;
                     if (imp.waar)         existing.waar         = imp.waar;
                     if (imp.datumAanvang) existing.datumAanvang = imp.datumAanvang;
@@ -1088,6 +1184,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (existing.referentie === 'Nee' && imp.referentie !== 'Nee') {
                         existing.referentie = imp.referentie;
                     }
+                    const changes = importFields
+                        .filter(f => before[f] !== (existing[f] || ''))
+                        .map(f => ({ field: f, from: before[f], to: existing[f] || '' }));
+                    if (changes.length > 0) clUpdated.push({ wo: existing.woNummer, changes });
                     updated++;
                 } else {
                     const newRec = {
@@ -1107,6 +1207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                     applyAfgemeldRules(newRec);
                     records.push(newRec);
+                    clAdded.push(imp.woNummer);
                     added++;
                 }
             });
@@ -1117,6 +1218,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             saveRecords();
             saveWaarNeedsReview();
+            if (clAdded.length > 0 || clUpdated.length > 0)
+                addChangelogEntry({ type: 'import', added: clAdded, updated: clUpdated });
             expandedGroups.clear();
             renderTable();
 
@@ -1138,7 +1241,73 @@ document.addEventListener('DOMContentLoaded', () => {
     // can alter the header row height).
     window.addEventListener('resize', updateStickyTops);
 
+    // ── Changelog panel ──────────────────────────────────────────────
+    function renderChangelog() {
+        if (!changelogList) return;
+        if (changelog.length === 0) {
+            changelogList.innerHTML = '<li class="cl-empty">Geen wijzigingen vastgelegd.</li>';
+            return;
+        }
+        changelogList.innerHTML = changelog.map(e => {
+            const time = `<span class="cl-time">${formatTs(e.ts)}</span>`;
+            let badge, desc;
+
+            if (e.type === 'add') {
+                badge = '<span class="cl-badge cl-badge-add">NIEUW</span>';
+                desc  = `WO ${e.wo} aangemaakt`;
+
+            } else if (e.type === 'delete') {
+                badge = '<span class="cl-badge cl-badge-delete">VERW.</span>';
+                desc  = `WO ${e.wo} verwijderd`;
+
+            } else if (e.type === 'waar') {
+                badge = '<span class="cl-badge cl-badge-edit">WAAR</span>';
+                desc  = `<em>${e.from}</em> → <em>${e.to}</em>`;
+
+            } else if (e.type === 'edit') {
+                badge = '<span class="cl-badge cl-badge-edit">WIJZIG</span>';
+                const chgs = (e.changes || [])
+                    .map(c => `${FIELD_LABELS[c.field] || c.field}: <em>${c.from || '(leeg)'}</em> → <em>${c.to || '(leeg)'}</em>`)
+                    .join(', ');
+                desc = `WO ${e.wo} | ${chgs}`;
+
+            } else if (e.type === 'import') {
+                const addedCount   = (e.added   || []).length;
+                const updatedCount = (e.updated || []).length;
+                const parts = [];
+                if (addedCount)   parts.push(`${addedCount} toegevoegd`);
+                if (updatedCount) parts.push(`${updatedCount} bijgewerkt`);
+                const summary = parts.join(', ') || 'geen wijzigingen';
+                let rows = '';
+                (e.added || []).forEach(wo => { rows += `<li>WO ${wo} — nieuw aangemaakt</li>`; });
+                (e.updated || []).forEach(u => {
+                    const chgs = u.changes.map(c =>
+                        `${FIELD_LABELS[c.field] || c.field}: <em>${c.from || '(leeg)'}</em> → <em>${c.to || '(leeg)'}</em>`
+                    ).join(', ');
+                    rows += `<li>WO ${u.wo} — ${chgs}</li>`;
+                });
+                return `<li class="cl-entry">${time}<span class="cl-badge cl-badge-import">IMPORT</span>` +
+                    `<details><summary>${summary}</summary><ul class="cl-import-details">${rows}</ul></details></li>`;
+            }
+
+            return `<li class="cl-entry">${time}${badge} <span class="cl-desc">${desc}</span></li>`;
+        }).join('');
+    }
+
+    changelogToggleBtn.addEventListener('click', () => {
+        const hidden = changelogPanel.classList.toggle('hidden');
+        changelogToggleBtn.textContent = hidden ? 'Wijzigingslog' : 'Verberg log';
+    });
+
+    changelogClearBtn.addEventListener('click', () => {
+        if (!confirm('Wijzigingslog wissen?')) return;
+        changelog = [];
+        saveChangelog();
+        renderChangelog();
+    });
+
     // Initial render
     renderTable();
+    renderChangelog();
     initColumnResize();
 });
