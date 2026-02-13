@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="cell-status ${statusColor('vervolg', summary.vervolg)}">${escapeHtml(summary.vervolg)}</td>
                     <td class="cell-opmerking"></td>
                     <td class="cell-actions">
-                        <button class="btn btn-danger" data-id="${recs[0].id}">Verwijder</button>
+                        <button class="btn btn-danger" data-id="${recs[0].id}" disabled title="Klap de groep uit om een record te verwijderen">Verwijder</button>
                     </td>
                 `;
                 tableBody.appendChild(tr);
