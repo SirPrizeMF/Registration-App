@@ -1008,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'gere':        'Ja',   // Gereed
         'gf':          'Ja',   // Gereed gefactureerd
         'gnf':         'Ja',   // Gereed niet gefactureerd
-        'verw':        'Ja',   // Verwerkt
+        // 'verw' is intentionally omitted — those rows are skipped on import
         'annul':       'Ja',   // Geannuleerd → also Uitg. = Vervallen
         'vervallen':   'Ja',   // Vervallen    → also Uitg. = Vervallen
         'onderhanden': 'Nee',  // In uitvoering
@@ -1048,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const refRaw = col(row, 'Referentie');
         const referentie = refRaw ? 'Ingevuld' : 'Nee';
 
-        return { regNummer, woNummer, waar, waarReview, datumAanvang, afgemeld, uitgevoerd, referentie };
+        return { regNummer, woNummer, waar, waarReview, datumAanvang, afgemeld, uitgevoerd, referentie, statusKey };
     }
 
     // ── CSV file import ──────────────────────────────────────────────
@@ -1071,6 +1071,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const imp = csvRowToRecord(row, warnings);
 
                 if (!imp.woNummer) { skipped++; return; }
+                if (imp.statusKey === 'verw') { skipped++; return; }
                 if (imp.datumAanvang && imp.datumAanvang < '2026-01-01') { tooOld++; return; }
 
                 // Track non-NRC waar values for manual-review flagging
