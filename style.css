@@ -148,6 +148,11 @@ thead th {
     background-color: #1e3a5f;
 }
 
+/* Header label row sits on top of the filter row when both are frozen */
+#headerRow th {
+    z-index: 3;
+}
+
 thead th:last-child {
     border-right: none;
 }
@@ -217,12 +222,13 @@ thead th:last-child {
     border-left: 3px solid #2563eb;
 }
 
-/* Filter row */
+/* Filter row – top is set dynamically via --filter-row-top (JS) so it sits
+   exactly below the measured header row instead of relying on a hardcoded px value */
 #filterRow th {
     padding: 3px 2px;
     background-color: #e5e7eb;
     position: sticky;
-    top: 26px;
+    top: var(--filter-row-top, 32px);
     z-index: 2;
 }
 

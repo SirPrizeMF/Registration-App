@@ -360,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tableBody.appendChild(tr);
             updateRowCount(0, 0);
             initTextareaHeights();
+            updateStickyTops();
             return;
         }
 
@@ -441,6 +442,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateRowCount(displayed.length, allGroups.size);
         initTextareaHeights();
+        updateStickyTops();
+    }
+
+    // Keep the filter row's sticky offset equal to the actual rendered height of the
+    // header row, so both rows freeze correctly at the top when scrolling.
+    function updateStickyTops() {
+        const headerRow = document.getElementById('headerRow');
+        if (!headerRow) return;
+        const h = headerRow.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--filter-row-top', h + 'px');
     }
 
     // Set textarea heights to fit their content (JS fallback for field-sizing: content)
@@ -1110,6 +1121,10 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsText(file);
         e.target.value = '';
     });
+
+    // Re-compute sticky offsets when the user resizes the window (font/zoom changes
+    // can alter the header row height).
+    window.addEventListener('resize', updateStickyTops);
 
     // Initial render
     renderTable();
