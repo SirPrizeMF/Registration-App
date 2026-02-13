@@ -1122,8 +1122,8 @@ document.addEventListener('DOMContentLoaded', () => {
             && !Object.prototype.hasOwnProperty.call(waarMappings, rawDossier.trim());
         const datumAanvang = normaliseDate(col(row, 'Uitvoerings datum', 'Uitvoeringsdatum'));
 
-        // Afg. + Uitg. from Status (short code)
-        const statusRaw = col(row, 'Status', 'Status omschr.', 'Status omschr', 'Statusomschrijving');
+        // Afg. + Uitg. from Status (short code) — only the 'Status' column is accepted
+        const statusRaw = col(row, 'Status');
         const statusKey = statusRaw.toLowerCase().trim();
         let afgemeld, uitgevoerd;
         if (STATUS_TO_AFG.hasOwnProperty(statusKey)) {
@@ -1152,6 +1152,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const rawRows = parseCsvRaw(evt.target.result);
             if (rawRows.length === 0) {
                 alert('Geen geldige records gevonden. Controleer of de koptekstrij aanwezig is.');
+                e.target.value = '';
+                return;
+            }
+
+            // Abort if the 'Status' short-code column is missing entirely.
+            // Falling back to 'Status omschr.' would write corrupt afgemeld values.
+            const csvKeys = Object.keys(rawRows[0] || {});
+            const hasStatusCol = csvKeys.some(k => k.toLowerCase().replace(/[\s.]/g, '') === 'status');
+            if (!hasStatusCol) {
+                alert(
+                    'Import afgebroken: de kolom "Status" (kortcode) ontbreekt in het CSV-bestand.\n\n' +
+                    'Zorg dat de CSV de kolom "Status" bevat met kortcodes (bijv. "1ewog", "gere", "annul").\n' +
+                    'Het gebruik van alleen "Status omschr." is niet veilig en wordt niet geaccepteerd.'
+                );
                 e.target.value = '';
                 return;
             }
